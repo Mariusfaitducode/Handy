@@ -1,4 +1,6 @@
 mod actions;
+mod app_context;
+mod app_styles;
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod apple_intelligence;
 mod audio_feedback;
@@ -676,6 +678,12 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_auto_submit_setting,
             shortcut::change_auto_submit_key_setting,
             shortcut::change_post_process_enabled_setting,
+            app_styles::get_app_styles,
+            app_styles::set_app_style,
+            app_styles::add_app_style_app,
+            app_styles::forget_app_style_app,
+            app_styles::change_app_styles_enabled_setting,
+            app_styles::list_running_apps_for_styles,
             shortcut::change_experimental_enabled_setting,
             shortcut::change_post_process_base_url_setting,
             shortcut::change_post_process_api_format_setting,

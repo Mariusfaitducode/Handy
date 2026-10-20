@@ -224,6 +224,39 @@ async changePostProcessEnabledSetting(enabled: boolean) : Promise<Result<null, s
     else return { status: "error", error: e  as any };
 }
 },
+async getAppStyles() : Promise<AppStyleRow[]> {
+    return await TAURI_INVOKE("get_app_styles");
+},
+async setAppStyle(appKey: string, appName: string, promptId: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_app_style", { appKey, appName, promptId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Adds an app to the list without changing its style (from the "Add an app"
+ * picker), so it shows with its suggestion and can be mapped.
+ */
+async addAppStyleApp(appKey: string, appName: string) : Promise<void> {
+    await TAURI_INVOKE("add_app_style_app", { appKey, appName });
+},
+/**
+ * Removes an app from the list and drops any custom style for it.
+ */
+async forgetAppStyleApp(appKey: string) : Promise<void> {
+    await TAURI_INVOKE("forget_app_style_app", { appKey });
+},
+async changeAppStylesEnabledSetting(enabled: boolean) : Promise<void> {
+    await TAURI_INVOKE("change_app_styles_enabled_setting", { enabled });
+},
+/**
+ * Apps currently open, for the "Add an app" picker.
+ */
+async listRunningAppsForStyles() : Promise<RunningApp[]> {
+    return await TAURI_INVOKE("list_running_apps_for_styles");
+},
 async changeExperimentalEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_experimental_enabled_setting", { enabled }) };
@@ -1009,7 +1042,23 @@ whats_new_last_seen_version?: string; selected_model?: string; onboarding_comple
  * Which input channel to use on the selected microphone device.
  * None means "average all channels" (original behavior).
  */
-selected_channel?: number | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+selected_channel?: number | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; 
+/**
+ * Pick the post-processing prompt from the app being dictated into.
+ */
+app_styles_enabled?: boolean; 
+/**
+ * User overrides of the built-in app → style suggestions.
+ */
+app_style_rules?: AppStyleRule[]; 
+/**
+ * Apps recently dictated into, listed in settings for quick mapping.
+ */
+app_style_recent?: AppStyleRecent[]; 
+/**
+ * Whether the built-in style prompts were already added once.
+ */
+app_styles_seeded?: boolean; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1043,6 +1092,32 @@ long_form_chunking?: boolean;
  * `overlay_position` (position `none` → style `None`).
  */
 overlay_style?: OverlayStyle }
+/**
+ * An app or site the user recently dictated into (or added by hand), shown
+ * in the settings list so mapping it is one click away.
+ */
+export type AppStyleRecent = { app_key: string; app_name: string }
+/**
+ * One row of the "Style by app" settings list.
+ */
+export type AppStyleRow = { app_key: string; app_name: string; 
+/**
+ * Built-in suggestion for this app, when that style prompt still exists.
+ */
+suggested_prompt_id: string | null; 
+/**
+ * The style that will actually be used. `None` = the default prompt.
+ */
+prompt_id: string | null; 
+/**
+ * True when the user overrode the suggestion.
+ */
+custom: boolean; is_web: boolean }
+/**
+ * A user's explicit choice for one app or site. `prompt_id: None` means
+ * "use the default prompt" (i.e. opt this app out of its suggested style).
+ */
+export type AppStyleRule = { app_key: string; app_name: string; prompt_id: string | null }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { transcribe: string[]; gpu_devices: GpuDeviceOption[] }
@@ -1134,6 +1209,7 @@ export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "
  * A retired ONNX model found on disk.
  */
 export type RetiredModel = { id: string; name: string; size_mb: number; replacement_repo: string }
+export type RunningApp = { app_key: string; app_name: string }
 export type SecretMap = Partial<{ [key in string]: string }>
 export type SecureInputStatus = { 
 /**
