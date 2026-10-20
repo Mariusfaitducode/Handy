@@ -535,6 +535,12 @@ pub struct AppSettings {
     /// `overlay_position` (position `none` → style `None`).
     #[serde(default = "default_overlay_style")]
     pub overlay_style: OverlayStyle,
+    /// Voice commands: hold a dedicated shortcut and speak an instruction that
+    /// the configured LLM applies to the selected text (or uses to write new
+    /// text when nothing is selected). Off by default so the extra global
+    /// shortcut is only registered for people who opt in.
+    #[serde(default)]
+    pub voice_commands_enabled: bool,
 }
 
 fn default_model() -> String {
@@ -906,6 +912,9 @@ fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
 
 pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 
+/// Shortcut binding id of the voice command mode.
+pub const VOICE_COMMAND_BINDING_ID: &str = "voice_command";
+
 pub fn get_default_settings() -> AppSettings {
     #[cfg(target_os = "windows")]
     let default_shortcut = "ctrl+space";
@@ -945,6 +954,24 @@ pub fn get_default_settings() -> AppSettings {
                 .to_string(),
             default_binding: default_post_process_shortcut.to_string(),
             current_binding: default_post_process_shortcut.to_string(),
+        },
+    );
+    // Mnemonic sibling of the dictation shortcut (option+space): add Command
+    // for "command". Only registered while voice commands are enabled.
+    #[cfg(target_os = "macos")]
+    let default_voice_command_shortcut = "option+command+space";
+    #[cfg(not(target_os = "macos"))]
+    let default_voice_command_shortcut = "ctrl+alt+space";
+
+    bindings.insert(
+        VOICE_COMMAND_BINDING_ID.to_string(),
+        ShortcutBinding {
+            id: VOICE_COMMAND_BINDING_ID.to_string(),
+            name: "Voice Command".to_string(),
+            description: "Applies a spoken instruction to the selected text, or writes new text."
+                .to_string(),
+            default_binding: default_voice_command_shortcut.to_string(),
+            current_binding: default_voice_command_shortcut.to_string(),
         },
     );
     bindings.insert(
@@ -1022,6 +1049,7 @@ pub fn get_default_settings() -> AppSettings {
         vad_backend: VadBackend::default(),
         long_form_chunking: default_long_form_chunking(),
         overlay_style: default_overlay_style(),
+        voice_commands_enabled: false,
     }
 }
 
