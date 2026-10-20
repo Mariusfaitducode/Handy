@@ -153,6 +153,7 @@ impl Segmenter {
     }
 
     /// Frames pushed so far, including skipped ones.
+    #[cfg(test)]
     pub fn position_frames(&self) -> u64 {
         self.end_frame()
     }

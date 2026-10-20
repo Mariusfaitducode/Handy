@@ -7,7 +7,14 @@ import React, {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { ask } from "@tauri-apps/plugin-dialog";
-import { Check, ChevronLeft, Copy, Download, Trash2 } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  Copy,
+  Download,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   commands,
@@ -334,9 +341,13 @@ export const MeetingDetail: React.FC<{ id: number; onBack: () => void }> = ({
                 setRenaming(true);
               }}
               title={t("meetings.detail.rename")}
-              className="text-start text-lg font-semibold leading-snug hover:text-text/80 cursor-text break-words"
+              className="group text-start text-lg font-semibold leading-snug cursor-pointer break-words"
             >
               {title}
+              <Pencil
+                aria-hidden
+                className="inline-block w-3.5 h-3.5 ms-2 align-baseline text-mid-gray opacity-0 group-hover:opacity-100 transition-opacity"
+              />
             </button>
           )}
           <p className="text-xs text-mid-gray mt-0.5 first-letter:uppercase tabular-nums">

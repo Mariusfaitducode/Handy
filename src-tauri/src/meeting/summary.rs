@@ -271,7 +271,22 @@ pub async fn summarize(model: &SummaryModel, input: &SummaryInput<'_>) -> Result
     Ok(summary)
 }
 
+/// One request may take a while on a long transcript or a local model, but
+/// never forever: a hung provider must not leave the minutes "pending".
+const REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(300);
+
 async fn complete(model: &SummaryModel, system: &str, user: &str) -> Result<String, String> {
+    match tokio::time::timeout(REQUEST_TIMEOUT, complete_once(model, system, user)).await {
+        Ok(result) => result,
+        Err(_) => Err(format!(
+            "No answer from {} after {} minutes",
+            model.label(),
+            REQUEST_TIMEOUT.as_secs() / 60
+        )),
+    }
+}
+
+async fn complete_once(model: &SummaryModel, system: &str, user: &str) -> Result<String, String> {
     if model.is_apple() {
         return complete_apple(system, user).await;
     }

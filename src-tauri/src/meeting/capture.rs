@@ -348,6 +348,7 @@ impl TrackWorker {
         let mut segmenter = Segmenter::new(SegmenterConfig::for_frame(frame));
         let mut pending_audio: Vec<f32> = Vec::new();
         let mut was_paused = false;
+        let mut last_arrival: Option<Instant> = None;
 
         loop {
             let chunk = match self.rx.recv_timeout(Duration::from_millis(500)) {
@@ -355,6 +356,8 @@ impl TrackWorker {
                 Err(RecvTimeoutError::Timeout) => continue,
                 Err(RecvTimeoutError::Disconnected) => break,
             };
+            let arrival_gap_ms = last_arrival.map(|t| t.elapsed().as_millis() as u64);
+            last_arrival = Some(Instant::now());
 
             let paused = self.paused.load(Ordering::Acquire);
             if paused {
@@ -370,21 +373,18 @@ impl TrackWorker {
             was_paused = false;
 
             // Keep the track on the meeting clock across gaps in the audio.
-            let now_ms = self
+            let chunk_ms = chunk.len() as u64 * 1000 / RATE;
+            let clock_ms = self
                 .clock
                 .lock()
                 .unwrap_or_else(|p| p.into_inner())
                 .elapsed()
                 .as_millis() as u64;
-            let position_ms =
-                (segmenter.position_frames() * frame as u64 + pending_audio.len() as u64) * 1000
-                    / RATE;
-            let chunk_ms = chunk.len() as u64 * 1000 / RATE;
-            if now_ms > position_ms + chunk_ms + GAP_TOLERANCE_MS {
-                let gap_ms = now_ms - chunk_ms - position_ms;
-                let gap_frames = gap_ms * RATE / 1000 / frame as u64;
+            let missing_ms = missing_audio_ms(arrival_gap_ms, chunk_ms, clock_ms);
+            let missing_frames = missing_ms * RATE / 1000 / frame as u64;
+            if missing_frames > 0 {
                 pending_audio.clear();
-                if let Some(u) = segmenter.skip(gap_frames) {
+                if let Some(u) = segmenter.skip(missing_frames) {
                     self.send(u);
                 }
             }
@@ -425,6 +425,19 @@ impl TrackWorker {
         if self.tx.send(item).is_err() {
             self.pending.fetch_sub(1, Ordering::Relaxed);
         }
+    }
+}
+
+/// Audio that never arrived before a chunk, in ms. The first chunk aligns
+/// the track with the meeting clock (a device starts a moment after it).
+/// Later, a pause in delivery much longer than the chunk itself is audio that
+/// never came (a device switch, a stalled tap); chunks that merely queued up
+/// behind a busy CPU arrive back to back and stay contiguous.
+fn missing_audio_ms(arrival_gap_ms: Option<u64>, chunk_ms: u64, clock_ms: u64) -> u64 {
+    match arrival_gap_ms {
+        None => clock_ms.saturating_sub(chunk_ms),
+        Some(gap) if gap > chunk_ms + GAP_TOLERANCE_MS => gap - chunk_ms,
+        Some(_) => 0,
     }
 }
 
@@ -540,5 +553,25 @@ impl Transcriber {
             }
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::missing_audio_ms;
+
+    #[test]
+    fn first_chunk_aligns_with_the_meeting_clock() {
+        assert_eq!(missing_audio_ms(None, 30, 430), 400);
+        assert_eq!(missing_audio_ms(None, 30, 10), 0);
+    }
+
+    #[test]
+    fn queued_chunks_are_contiguous_but_silences_are_gaps() {
+        // Back-to-back delivery after a backlog: no gap.
+        assert_eq!(missing_audio_ms(Some(0), 30, 60_000), 0);
+        assert_eq!(missing_audio_ms(Some(40), 30, 60_000), 0);
+        // Three seconds without audio (device switch): the time is skipped.
+        assert_eq!(missing_audio_ms(Some(3_030), 30, 60_000), 3_000);
     }
 }
