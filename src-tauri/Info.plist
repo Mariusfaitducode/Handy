@@ -4,5 +4,9 @@
 <dict>
   <key>NSMicrophoneUsageDescription</key>
   <string>Request microphone access to transcribe audio locally</string>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Handy adds your voice notes to Apple Notes, only if you turn this on in the Notes settings.</string>
+  <key>NSDocumentsFolderUsageDescription</key>
+  <string>Handy saves your voice notes as Markdown files in Documents › Handy Notes.</string>
 </dict>
 </plist>
