@@ -15,6 +15,7 @@
     "advanced": "Avancé",
     "postProcessing": "Post-traitement",
     "history": "Historique",
+    "stats": "Statistiques",
     "debug": "Débogage",
     "about": "À propos"
   },
@@ -459,6 +460,78 @@
       "retranscribeError": "Impossible de re-transcrire. Veuillez réessayer.",
       "transcribing": "Transcription en cours...",
       "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai."
+    },
+    "stats": {
+      "title": "Statistiques",
+      "loading": "Chargement des statistiques…",
+      "error": "Impossible de charger vos statistiques.",
+      "retry": "Réessayer",
+      "empty": {
+        "title": "Pas encore de statistiques",
+        "description": "Dictez votre premier texte avec votre raccourci : les mots, le temps gagné et votre série s'afficheront ici."
+      },
+      "hero": {
+        "words_one": "mot dicté",
+        "words_other": "mots dictés",
+        "timeSaved": "Temps gagné : environ {{duration}}, par rapport à une frappe à {{wpm}} mots/min",
+        "noTimeSaved": "Continuez à dicter pour voir le temps que vous gagnez."
+      },
+      "tiles": {
+        "today": "Aujourd'hui",
+        "week": "7 derniers jours",
+        "streak": "Série",
+        "pace": "Vitesse de parole",
+        "streakValue_one": "{{count}} jour",
+        "streakValue_other": "{{count}} jours",
+        "streakBest": "Record : {{count}}",
+        "paceUnit": "mots/min",
+        "unknown": "—",
+        "paceUnknownHint": "Après quelques dictées"
+      },
+      "chart": {
+        "title": "30 derniers jours",
+        "start": "Il y a 30 jours",
+        "today": "Aujourd'hui",
+        "tooltip_one": "{{date}} · {{formatted}} mot",
+        "tooltip_other": "{{date}} · {{formatted}} mots",
+        "noWords": "{{date}} · aucune dictée"
+      },
+      "apps": {
+        "title": "Applications",
+        "empty": "Les applications seront suivies dès votre prochaine dictée."
+      },
+      "languages": {
+        "title": "Langues",
+        "empty": "Pas encore assez de texte pour détecter une langue."
+      },
+      "settings": {
+        "title": "Réglages",
+        "typingSpeed": {
+          "title": "Votre vitesse de frappe",
+          "description": "Sert à estimer le temps gagné. 40 mots/min correspond à la moyenne au clavier.",
+          "unit": "mots/min"
+        },
+        "reset": {
+          "title": "Réinitialiser les statistiques",
+          "description": "Efface toutes les statistiques de cet appareil. Votre historique n'est pas touché.",
+          "button": "Réinitialiser",
+          "dialogTitle": "Réinitialiser les statistiques ?",
+          "dialogBody": "Les mots, les séries et le temps gagné repartiront de zéro. Cette action est irréversible.",
+          "confirm": "Réinitialiser",
+          "cancel": "Annuler",
+          "error": "Impossible de réinitialiser les statistiques."
+        }
+      },
+      "footer": {
+        "privacy": "Calculées sur cet appareil. Aucun texte n'est conservé dans les statistiques.",
+        "since": "Depuis le {{date}}"
+      },
+      "duration": {
+        "lessThanMinute": "moins d'une minute",
+        "minutes": "{{minutes}} min",
+        "hours": "{{hours}} h",
+        "hoursMinutes": "{{hours}} h {{minutes}} min"
+      }
     },
     "debug": {
       "title": "Débogage",

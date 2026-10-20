@@ -934,6 +934,33 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
     else return { status: "error", error: e  as any };
 }
 },
+async getUsageStats() : Promise<Result<UsageStats, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_usage_stats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Returns the speed actually stored (clamped to a sensible range).
+ */
+async setStatsTypingSpeed(wpm: number) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_stats_typing_speed", { wpm }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async resetUsageStats() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("reset_usage_stats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
@@ -1058,6 +1085,11 @@ export type ChineseScript =
 "as_transcribed" | "simplified" | "traditional"
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
+export type DailyUsage = { 
+/**
+ * Local calendar day, `YYYY-MM-DD`.
+ */
+day: string; words: number }
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
@@ -1226,6 +1258,41 @@ export type StreamWorkKind = "transcribing" | "polishing"
 export type Theme = "system" | "light" | "dark"
 export type TranscribeAcceleratorSetting = "auto" | "cpu" | "gpu"
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
+export type UsageShare = { 
+/**
+ * App name, or language code (ISO 639-1) for languages.
+ */
+name: string; words: number }
+export type UsageStats = { total_words: number; total_dictations: number; today_words: number; 
+/**
+ * Rolling last 7 days, today included.
+ */
+week_words: number; 
+/**
+ * Estimated, never negative.
+ */
+time_saved_seconds: number; week_time_saved_seconds: number; current_streak_days: number; longest_streak_days: number; 
+/**
+ * Measured speaking pace, `None` until enough speech has been timed.
+ */
+speaking_wpm: number | null; typing_wpm: number; 
+/**
+ * One entry per day for the last `CHART_DAYS` days, oldest first,
+ * zero-filled.
+ */
+daily: DailyUsage[]; top_apps: UsageShare[]; 
+/**
+ * Words with a known app, to compute shares.
+ */
+app_words: number; languages: UsageShare[]; 
+/**
+ * Words with a known language, to compute shares.
+ */
+language_words: number; 
+/**
+ * First day with any activity.
+ */
+first_day: string | null }
 export type VadBackend = "silero" | "earshot"
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
 
