@@ -1,12 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { readFile } from "@tauri-apps/plugin-fs";
-import { Check, Copy, FolderOpen, RotateCcw, Star, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  FolderOpen,
+  Pencil,
+  RotateCcw,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   commands,
   events,
+  type DictionarySuggestion,
   type HistoryEntry,
   type HistoryUpdatePayload,
 } from "@/bindings";
@@ -14,6 +23,8 @@ import { useOsType } from "@/hooks/useOsType";
 import { formatDateTime } from "@/utils/dateFormat";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
+import { Textarea } from "../../ui/Textarea";
+import { LearnFromCorrection } from "../dictionary/LearnFromCorrection";
 import { copyToClipboard } from "./clipboard";
 
 const IconButton: React.FC<{
@@ -313,8 +324,14 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   retryTranscription,
 }) => {
   const { t, i18n } = useTranslation();
+  const osType = useOsType();
   const [showCopied, setShowCopied] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [suggestions, setSuggestions] = useState<DictionarySuggestion[]>([]);
+  const closeSuggestions = useCallback(() => setSuggestions([]), []);
 
   const hasTranscription = entry.transcription_text.trim().length > 0;
 
@@ -359,6 +376,42 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     }
   };
 
+  const startEditing = () => {
+    setDraft(entry.transcription_text);
+    setSuggestions([]);
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    const text = draft.trim();
+    if (!text || text === entry.transcription_text.trim()) {
+      setEditing(false);
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const result = await commands.updateHistoryEntryText(entry.id, text);
+      if (result.status !== "ok") throw new Error(String(result.error));
+      setEditing(false);
+      setSuggestions(result.data);
+    } catch (error) {
+      console.error("Failed to save correction:", error);
+      toast.error(t("settings.history.editError"));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const onEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setEditing(false);
+    } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      saveEdit();
+    }
+  };
+
   const formattedDate = formatDateTime(String(entry.timestamp), i18n.language);
 
   return (
@@ -376,6 +429,14 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             ) : (
               <Copy width={16} height={16} />
             )}
+          </IconButton>
+          <IconButton
+            onClick={startEditing}
+            disabled={!hasTranscription || retrying || editing}
+            active={editing}
+            title={t("settings.history.edit")}
+          >
+            <Pencil width={16} height={16} />
           </IconButton>
           <IconButton
             onClick={onToggleSaved}
@@ -418,34 +479,87 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
         </div>
       </div>
 
-      <p
-        className={`italic text-sm pb-2 ${
-          retrying
-            ? ""
-            : hasTranscription
-              ? "text-text/90 select-text cursor-text whitespace-pre-wrap break-words"
-              : "text-text/40"
-        }`}
-        style={
-          retrying
-            ? { animation: "transcribe-pulse 3s ease-in-out infinite" }
-            : undefined
-        }
-      >
-        {retrying && (
-          <style>{`
+      {editing ? (
+        <div className="space-y-2 pb-2">
+          <Textarea
+            autoFocus
+            className="w-full text-sm font-normal"
+            variant="compact"
+            value={draft}
+            disabled={savingEdit}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={onEditKeyDown}
+            onFocus={(e) =>
+              e.currentTarget.setSelectionRange(
+                e.currentTarget.value.length,
+                e.currentTarget.value.length,
+              )
+            }
+            aria-label={t("settings.history.edit")}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-mid-gray">
+              {t("settings.history.editHint", {
+                shortcut: osType === "macos" ? "⌘↵" : "Ctrl+↵",
+              })}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={savingEdit}
+                onClick={() => setEditing(false)}
+              >
+                {t("settings.history.editCancel")}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={savingEdit || !draft.trim()}
+                onClick={saveEdit}
+              >
+                {t("settings.history.editSave")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p
+          className={`italic text-sm pb-2 ${
+            retrying
+              ? ""
+              : hasTranscription
+                ? "text-text/90 select-text cursor-text whitespace-pre-wrap break-words"
+                : "text-text/40"
+          }`}
+          style={
+            retrying
+              ? { animation: "transcribe-pulse 3s ease-in-out infinite" }
+              : undefined
+          }
+        >
+          {retrying && (
+            <style>{`
             @keyframes transcribe-pulse {
               0%, 100% { color: color-mix(in srgb, var(--color-text) 40%, transparent); }
               50% { color: color-mix(in srgb, var(--color-text) 90%, transparent); }
             }
           `}</style>
-        )}
-        {retrying
-          ? t("settings.history.transcribing")
-          : hasTranscription
-            ? entry.transcription_text
-            : t("settings.history.transcriptionFailed")}
-      </p>
+          )}
+          {retrying
+            ? t("settings.history.transcribing")
+            : hasTranscription
+              ? entry.transcription_text
+              : t("settings.history.transcriptionFailed")}
+        </p>
+      )}
+
+      {suggestions.length > 0 && !editing && (
+        <LearnFromCorrection
+          suggestions={suggestions}
+          onClose={closeSuggestions}
+        />
+      )}
 
       <AudioPlayer onLoadRequest={handleLoadAudio} className="w-full" />
     </div>

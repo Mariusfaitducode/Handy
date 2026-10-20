@@ -15,6 +15,7 @@
     "advanced": "Avancé",
     "postProcessing": "Post-traitement",
     "history": "Historique",
+    "dictionary": "Dictionnaire",
     "debug": "Débogage",
     "about": "À propos"
   },
@@ -458,7 +459,99 @@
       "retranscribe": "Re-transcrire",
       "retranscribeError": "Impossible de re-transcrire. Veuillez réessayer.",
       "transcribing": "Transcription en cours...",
-      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai."
+      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai.",
+      "edit": "Corriger la transcription",
+      "editSave": "Enregistrer",
+      "editCancel": "Annuler",
+      "editHint": "{{shortcut}} pour enregistrer · Échap pour annuler",
+      "editError": "Impossible d'enregistrer la correction.",
+      "learn": {
+        "title": "Retenir cette correction ?",
+        "add": "Ajouter",
+        "added": "Ajouté",
+        "dismiss": "Non merci"
+      }
+    },
+    "dictionary": {
+      "title": "Dictionnaire",
+      "description": "Les noms et termes que Handy doit connaître, et les corrections de ce qu'il entend mal.",
+      "add": {
+        "heardPlaceholder": "Mot ou nom",
+        "heardPlaceholderReplacement": "Entendu, ex. Andy",
+        "writtenPlaceholder": "Écrire à la place (facultatif)",
+        "button": "Ajouter",
+        "becomes": "devient",
+        "hint": "Laissez le second champ vide pour apprendre un mot. Remplissez-le pour corriger une erreur d'écoute, par exemple « Andy » → « Handy ».",
+        "added": "« {{term}} » ajouté au dictionnaire"
+      },
+      "errors": {
+        "empty": "Saisissez d'abord un mot.",
+        "too_long": "50 caractères maximum.",
+        "duplicate": "« {{term}} » est déjà dans votre dictionnaire.",
+        "generic": "Impossible de modifier le dictionnaire. Veuillez réessayer."
+      },
+      "filterPlaceholder": "Rechercher parmi {{count}} entrées",
+      "noMatch": "Aucune entrée ne correspond à « {{query}} ».",
+      "empty": {
+        "title": "Votre dictionnaire est vide",
+        "body": "Ajoutez les noms, marques et termes que vous employez. Astuce : corrigez une dictée dans l'Historique et Handy vous proposera de retenir la correction."
+      },
+      "entry": {
+        "remove": "Retirer {{term}}",
+        "addedBy": "Ajouté par {{name}} le {{date}}",
+        "addedOn": "Ajouté le {{date}}",
+        "removed": "« {{term}} » retiré",
+        "undo": "Annuler"
+      },
+      "suggestions": {
+        "title": "Suggestions",
+        "description": "Les noms qui reviennent souvent dans vos dictées.",
+        "seen_one": "vu {{count}} fois",
+        "seen_other": "vu {{count}} fois",
+        "add": "Ajouter",
+        "dismiss": "Ignorer",
+        "dismissLabel": "Ignorer {{term}}"
+      },
+      "sharing": {
+        "title": "Partage",
+        "description": "Partagez votre dictionnaire avec un proche grâce à un dossier commun ou un fichier.",
+        "author": {
+          "title": "Votre nom",
+          "description": "Affiché à côté des mots que vous ajoutez, chez les personnes avec qui vous partagez.",
+          "placeholder": "Prénom"
+        },
+        "folder": {
+          "title": "Dossier partagé",
+          "description": "Choisissez le même dossier sur chaque Mac, par exemple un dossier iCloud Drive ou Dropbox partagé. Handy synchronise chaque minute et fusionne les deux côtés : aucun mot n'est perdu.",
+          "choose": "Choisir un dossier…",
+          "dialogTitle": "Choisissez le dossier par lequel partager votre dictionnaire",
+          "stop": "Arrêter",
+          "syncNow": "Synchroniser",
+          "syncing": "Synchronisation…",
+          "never": "Pas encore synchronisé",
+          "lastSync": "Synchronisé {{time}}",
+          "stopped": "Synchronisation arrêtée. Vos mots restent sur ce Mac."
+        },
+        "syncErrors": {
+          "folder_missing": "Dossier introuvable. Le disque est-il connecté ?",
+          "not_downloaded": "iCloud n'a pas encore téléchargé le fichier partagé sur ce Mac. Ouvrez le dossier dans le Finder pour le récupérer.",
+          "unreadable": "Le fichier partagé est illisible ; il n'a pas été modifié.",
+          "write_failed": "Impossible d'écrire dans le dossier partagé. Vérifiez qu'il est accessible en écriture."
+        },
+        "file": {
+          "title": "Fichier",
+          "description": "Envoyez votre dictionnaire par AirDrop ou e-mail. L'import ajoute des mots, il n'en supprime jamais.",
+          "export": "Exporter…",
+          "import": "Importer…",
+          "filterName": "Dictionnaire Handy",
+          "exported_one": "{{count}} entrée exportée",
+          "exported_other": "{{count}} entrées exportées",
+          "imported": "Import terminé : {{added}} ajoutée(s), {{updated}} mise(s) à jour",
+          "importedNothing": "Rien de nouveau dans ce fichier.",
+          "exportError": "Impossible d'exporter le dictionnaire.",
+          "importError": "Ce fichier n'est pas un dictionnaire Handy."
+        }
+      }
     },
     "debug": {
       "title": "Débogage",
