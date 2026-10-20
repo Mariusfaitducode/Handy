@@ -16,7 +16,8 @@
     "history": "السجل",
     "debug": "تصحيح الأخطاء",
     "about": "حول",
-    "models": "النماذج"
+    "models": "النماذج",
+    "voiceCommands": "Commands"
   },
   "onboarding": {
     "subtitle": "للبدء، اختر نموذج التفريغ الصوتي",
@@ -141,6 +142,10 @@
           "transcribe_with_post_process": {
             "name": "مفتاح المعالجة اللاحقة",
             "description": "اختياري: مفتاح اختصار مخصص يطبق دائماً المعالجة اللاحقة بالذكاء الاصطناعي على التفريغ الصوتي."
+          },
+          "voice_command": {
+            "name": "Voice Command Shortcut",
+            "description": "Hold this shortcut and say an instruction to apply to the selected text."
           }
         },
         "errors": {
@@ -428,7 +433,14 @@
       "retranscribe": "إعادة النسخ",
       "retranscribeError": "فشلت إعادة النسخ. يرجى المحاولة مرة أخرى.",
       "transcribing": "جارٍ النسخ...",
-      "transcriptionFailed": "فشل النسخ. يمكنك إعادة النسخ باستخدام أيقونة إعادة المحاولة."
+      "transcriptionFailed": "فشل النسخ. يمكنك إعادة النسخ باستخدام أيقونة إعادة المحاولة.",
+      "command": {
+        "badge": "Command",
+        "retry": "Run the command again",
+        "instruction": "“{{instruction}}”",
+        "noResult": "No result. Run the command again with the retry icon.",
+        "original": "Original text"
+      }
     },
     "debug": {
       "title": "تصحيح الأخطاء",
@@ -626,6 +638,33 @@
         "label": "إعادة الفحص",
         "tooltip": "إعادة الفحص بحثًا عن النماذج المضافة إلى مجلد النماذج أو ذاكرة Hugging Face التخزينية المؤقتة خارج Handy"
       }
+    },
+    "voiceCommands": {
+      "title": "Voice commands",
+      "enable": {
+        "label": "Enable voice commands",
+        "description": "Select text, hold the shortcut and say what to do with it. With nothing selected, Handy writes the text at the cursor."
+      },
+      "model": {
+        "title": "AI model",
+        "description": "Shared with post-processing: voice commands use this provider and model.",
+        "missing": "Choose a provider, a model and an API key to use voice commands."
+      },
+      "howTo": {
+        "title": "How it works",
+        "select": "Select text in any app — or nothing, to write new text.",
+        "hold": "Hold {{shortcut}} and say what you want.",
+        "release": "Release: the result replaces the selection. Press Escape to stop; the original stays in History.",
+        "privacy": "The selection and your instruction are sent to the AI provider you chose. Secure fields such as passwords are never read."
+      },
+      "examples": {
+        "title": "Try saying",
+        "list": "“Make this a bulleted list”",
+        "translate": "“Translate into English”",
+        "polite": "“Make it more polite”",
+        "summarize": "“Summarize in two sentences”",
+        "email": "“Write an email moving the meeting to Friday”"
+      }
     }
   },
   "footer": {
@@ -691,7 +730,24 @@
   "overlay": {
     "transcribing": "جاري التفريغ...",
     "processing": "جاري المعالجة...",
-    "loadingModel": "جارٍ تحميل النموذج..."
+    "loadingModel": "جارٍ تحميل النموذج...",
+    "command": {
+      "thinking": "Thinking...",
+      "done": {
+        "replaced": "Selection replaced",
+        "inserted": "Text inserted",
+        "copied": "Copied to clipboard"
+      },
+      "errors": {
+        "no_llm": "Set up an AI model first",
+        "secure_input": "Secure input is on",
+        "no_instruction": "No instruction heard",
+        "selection_too_long": "Selection is too long",
+        "transcription_failed": "Couldn't transcribe",
+        "llm_failed": "The AI model didn't answer",
+        "paste_failed": "Couldn't paste — copied"
+      }
+    }
   },
   "whatsNew": {
     "title": "الجديد في Handy v{{version}}"

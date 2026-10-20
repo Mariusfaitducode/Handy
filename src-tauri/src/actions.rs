@@ -34,7 +34,7 @@ struct RecordingErrorEvent {
 
 /// Drop guard that finishes the transcription pipeline, including immediate
 /// model unloading on early exits.
-struct FinishGuard(AppHandle, Arc<TranscriptionManager>);
+pub(crate) struct FinishGuard(pub(crate) AppHandle, pub(crate) Arc<TranscriptionManager>);
 impl Drop for FinishGuard {
     fn drop(&mut self) {
         self.1.maybe_unload_immediately("transcription session");
@@ -63,7 +63,7 @@ struct TranscribeAction {
 const TRANSCRIPTION_FIELD: &str = "transcription";
 
 /// Strip invisible Unicode characters that some LLMs may insert
-fn strip_invisible_chars(s: &str) -> String {
+pub(crate) fn strip_invisible_chars(s: &str) -> String {
     s.replace(['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'], "")
 }
 
@@ -71,7 +71,7 @@ fn strip_invisible_chars(s: &str) -> String {
 /// reasoning, and some local servers put the reasoning text into `content`
 /// instead of a separate field — without this the user would get the model's
 /// chain of thought pasted along with the cleaned transcription.
-fn strip_think_block(s: &str) -> &str {
+pub(crate) fn strip_think_block(s: &str) -> &str {
     if let Some(rest) = s.trim_start().strip_prefix("<think>") {
         if let Some(end) = rest.find("</think>") {
             return rest[end + "</think>".len()..].trim_start();
@@ -95,7 +95,10 @@ fn is_blank_transcription(transcription: &str) -> bool {
     transcription.trim().is_empty()
 }
 
-async fn complete_unless_cancelled<F, C>(operation: F, is_cancelled: C) -> Option<F::Output>
+pub(crate) async fn complete_unless_cancelled<F, C>(
+    operation: F,
+    is_cancelled: C,
+) -> Option<F::Output>
 where
     F: Future,
     C: Fn() -> bool,
@@ -861,6 +864,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     map.insert(
         "transcribe_with_post_process".to_string(),
         Arc::new(TranscribeAction { post_process: true }) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        crate::settings::VOICE_COMMAND_BINDING_ID.to_string(),
+        Arc::new(crate::voice_command::VoiceCommandAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "cancel".to_string(),

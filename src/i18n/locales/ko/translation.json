@@ -16,7 +16,8 @@
     "postProcessing": "후처리",
     "history": "히스토리",
     "debug": "디버그",
-    "about": "정보"
+    "about": "정보",
+    "voiceCommands": "Commands"
   },
   "onboarding": {
     "subtitle": "시작하려면 음성 인식 모델을 선택하세요",
@@ -144,6 +145,10 @@
           "transcribe_with_post_process": {
             "name": "후처리 단축키",
             "description": "선택 사항: 항상 AI 후처리를 적용하는 전용 단축키입니다."
+          },
+          "voice_command": {
+            "name": "Voice Command Shortcut",
+            "description": "Hold this shortcut and say an instruction to apply to the selected text."
           }
         },
         "errors": {
@@ -458,7 +463,14 @@
       "retranscribe": "다시 전사",
       "retranscribeError": "다시 전사에 실패했습니다. 다시 시도해주세요.",
       "transcribing": "전사 중...",
-      "transcriptionFailed": "전사에 실패했습니다. 재시도 아이콘을 사용하여 다시 전사할 수 있습니다."
+      "transcriptionFailed": "전사에 실패했습니다. 재시도 아이콘을 사용하여 다시 전사할 수 있습니다.",
+      "command": {
+        "badge": "Command",
+        "retry": "Run the command again",
+        "instruction": "“{{instruction}}”",
+        "noResult": "No result. Run the command again with the retry icon.",
+        "original": "Original text"
+      }
     },
     "debug": {
       "title": "디버그",
@@ -626,6 +638,33 @@
         "label": "새 소식 표시",
         "description": "Handy 업데이트 후 릴리스 노트를 표시합니다"
       }
+    },
+    "voiceCommands": {
+      "title": "Voice commands",
+      "enable": {
+        "label": "Enable voice commands",
+        "description": "Select text, hold the shortcut and say what to do with it. With nothing selected, Handy writes the text at the cursor."
+      },
+      "model": {
+        "title": "AI model",
+        "description": "Shared with post-processing: voice commands use this provider and model.",
+        "missing": "Choose a provider, a model and an API key to use voice commands."
+      },
+      "howTo": {
+        "title": "How it works",
+        "select": "Select text in any app — or nothing, to write new text.",
+        "hold": "Hold {{shortcut}} and say what you want.",
+        "release": "Release: the result replaces the selection. Press Escape to stop; the original stays in History.",
+        "privacy": "The selection and your instruction are sent to the AI provider you chose. Secure fields such as passwords are never read."
+      },
+      "examples": {
+        "title": "Try saying",
+        "list": "“Make this a bulleted list”",
+        "translate": "“Translate into English”",
+        "polite": "“Make it more polite”",
+        "summarize": "“Summarize in two sentences”",
+        "email": "“Write an email moving the meeting to Friday”"
+      }
     }
   },
   "footer": {
@@ -691,7 +730,24 @@
   "overlay": {
     "transcribing": "텍스트로 변환 중...",
     "processing": "처리 중...",
-    "loadingModel": "모델 로딩 중..."
+    "loadingModel": "모델 로딩 중...",
+    "command": {
+      "thinking": "Thinking...",
+      "done": {
+        "replaced": "Selection replaced",
+        "inserted": "Text inserted",
+        "copied": "Copied to clipboard"
+      },
+      "errors": {
+        "no_llm": "Set up an AI model first",
+        "secure_input": "Secure input is on",
+        "no_instruction": "No instruction heard",
+        "selection_too_long": "Selection is too long",
+        "transcription_failed": "Couldn't transcribe",
+        "llm_failed": "The AI model didn't answer",
+        "paste_failed": "Couldn't paste — copied"
+      }
+    }
   },
   "whatsNew": {
     "title": "Handy v{{version}}의 새 소식"

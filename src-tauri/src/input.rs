@@ -75,6 +75,11 @@ mod macos {
     /// TIS APIs must run on the main thread. Handy's paste path already enters
     /// through `AppHandle::run_on_main_thread` before reaching this function.
     fn resolve_command_v_keycode() -> Result<u16, String> {
+        resolve_command_keycode(b'v')
+    }
+
+    /// Same resolution as [`resolve_command_v_keycode`] for any ASCII letter.
+    fn resolve_command_keycode(letter: u8) -> Result<u16, String> {
         // SAFETY: This function is called on the macOS main thread. The returned
         // source follows the Create Rule and is released by InputSource::drop.
         let source = InputSource(unsafe { TISCopyCurrentKeyboardLayoutInputSource() });
@@ -123,11 +128,29 @@ mod macos {
                 )
             };
 
-            status == 0 && length == 1 && chars[0] == u16::from(b'v')
+            status == 0 && length == 1 && chars[0] == u16::from(letter)
         })
-        .ok_or_else(|| "could not map Cmd+V in the current macOS keyboard layout".to_string())?;
+        .ok_or_else(|| {
+            format!(
+                "could not map Cmd+{} in the current macOS keyboard layout",
+                char::from(letter).to_ascii_uppercase()
+            )
+        })?;
 
         Ok(keycode)
+    }
+
+    /// kVK_ANSI_C, the fallback when the active layout cannot be queried.
+    const ANSI_C_KEYCODE: u16 = 8;
+
+    pub(super) fn command_c_key() -> Key {
+        match resolve_command_keycode(b'c') {
+            Ok(keycode) => Key::Other(u32::from(keycode)),
+            Err(error) => {
+                warn!("{error}; using ANSI C keycode {ANSI_C_KEYCODE}");
+                Key::Other(u32::from(ANSI_C_KEYCODE))
+            }
+        }
     }
 
     pub(super) fn command_v_key() -> Key {
@@ -200,6 +223,32 @@ pub fn send_paste_ctrl_v(enigo: &mut Enigo, hold_ms: u64) -> Result<(), String> 
         .map_err(|e| format!("Failed to release modifier key: {}", e))?;
 
     Ok(())
+}
+
+/// Sends a Ctrl+C or Cmd+C copy command (layout-aware on macOS, like
+/// [`send_paste_ctrl_v`]). Used by voice commands to read the selection.
+/// On macOS this must run on the main thread (keyboard layout lookup).
+pub fn send_copy_ctrl_c(enigo: &mut Enigo, hold_ms: u64) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    let (modifier_key, c_key_code) = (Key::Meta, macos::command_c_key());
+    #[cfg(target_os = "windows")]
+    let (modifier_key, c_key_code) = (Key::Control, Key::Other(0x43)); // VK_C
+    #[cfg(target_os = "linux")]
+    let (modifier_key, c_key_code) = (Key::Control, Key::Unicode('c'));
+
+    enigo
+        .key(modifier_key, enigo::Direction::Press)
+        .map_err(|e| format!("Failed to press modifier key: {}", e))?;
+    let click = enigo
+        .key(c_key_code, enigo::Direction::Click)
+        .map_err(|e| format!("Failed to click C key: {}", e));
+    std::thread::sleep(std::time::Duration::from_millis(hold_ms));
+    // Always release the modifier, even if the click failed, so a stuck Cmd
+    // never leaks into the user's next keystrokes.
+    enigo
+        .key(modifier_key, enigo::Direction::Release)
+        .map_err(|e| format!("Failed to release modifier key: {}", e))?;
+    click
 }
 
 /// Sends a Ctrl+Shift+V paste command.

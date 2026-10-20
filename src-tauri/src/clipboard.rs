@@ -14,7 +14,7 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 #[cfg(target_os = "linux")]
 use crate::utils::{is_gnome_wayland, is_kde_wayland, is_wayland};
 
-fn with_enigo<T>(
+pub(crate) fn with_enigo<T>(
     app_handle: &AppHandle,
     f: impl FnOnce(&mut Enigo) -> Result<T, String>,
 ) -> Result<T, String> {
@@ -772,13 +772,29 @@ fn should_send_auto_submit(auto_submit: bool, paste_method: PasteMethod) -> bool
 }
 
 pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
+    paste_with_dictation_extras(text, app_handle, true)
+}
+
+/// Pastes text that replaces a selection (voice commands). The dictation-only
+/// extras — trailing space and auto-submit — are skipped: replacing a selection
+/// must not add a stray space or press Enter in the user's document.
+pub fn paste_replacement(text: String, app_handle: AppHandle) -> Result<(), String> {
+    paste_with_dictation_extras(text, app_handle, false)
+}
+
+fn paste_with_dictation_extras(
+    text: String,
+    app_handle: AppHandle,
+    dictation_extras: bool,
+) -> Result<(), String> {
     let settings = get_settings(&app_handle);
     let paste_method = settings.paste_method;
     let paste_delay_ms = settings.paste_delay_ms;
     let paste_delay_after_ms = settings.paste_delay_after_ms;
+    let auto_submit = dictation_extras && settings.auto_submit;
 
     // Append trailing space if setting is enabled
-    let text = if settings.append_trailing_space {
+    let text = if dictation_extras && settings.append_trailing_space {
         format!("{} ", text)
     } else {
         text
@@ -816,7 +832,7 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
                         &app_handle,
                         &paste_method,
                         enigo,
-                        settings.auto_submit,
+                        auto_submit,
                         settings.auto_submit_key,
                         settings.clipboard_handling,
                     )
@@ -846,7 +862,7 @@ pub fn paste(text: String, app_handle: AppHandle) -> Result<(), String> {
         }
     }
 
-    if should_send_auto_submit(settings.auto_submit, paste_method) {
+    if should_send_auto_submit(auto_submit, paste_method) {
         std::thread::sleep(Duration::from_millis(50));
         if let Err(error) = with_enigo(&app_handle, |enigo| {
             send_return_key(enigo, settings.auto_submit_key)
