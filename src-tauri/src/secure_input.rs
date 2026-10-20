@@ -483,6 +483,11 @@ mod imp {
                 if id == "transcribe_with_post_process" && !settings.post_process_enabled {
                     continue;
                 }
+                if id == crate::notes::VOICE_NOTE_BINDING
+                    && !crate::notes::binding_enabled(&settings)
+                {
+                    continue;
+                }
 
                 match plan_fallback_binding(id, binding) {
                     ShadowPlan::Immune => immune += 1,

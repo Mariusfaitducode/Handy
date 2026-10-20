@@ -344,6 +344,46 @@
     box-shadow: 0 0 0 7px transparent;
   }
 }
+/* Voice note mark: replaces the dot, same arming/ready treatment. */
+.snote {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  margin-left: -3px;
+  transition:
+    color 180ms ease,
+    opacity 180ms ease;
+}
+.snote.ready {
+  color: var(--s-accent);
+}
+.snote.arming {
+  color: var(--s-muted);
+  opacity: 0.45;
+}
+/* Voice note confirmation glyph ("Note saved" / "Note not saved"). */
+.sconfirm {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  animation: sconfirm-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sconfirm.ok {
+  color: var(--s-accent);
+}
+.sconfirm.fail {
+  color: var(--s-muted);
+}
+@keyframes sconfirm-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .stimer {
   font-size: 12px;
   color: var(--s-faint);

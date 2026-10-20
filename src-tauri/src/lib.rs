@@ -15,6 +15,7 @@ mod input;
 mod llm_client;
 mod managers;
 mod memory;
+mod notes;
 mod overlay;
 mod paste_tx;
 pub mod portable;
@@ -212,6 +213,13 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    match notes::NotesManager::new(app_handle) {
+        Ok(notes_manager) => {
+            app_handle.manage(Arc::new(notes_manager));
+        }
+        // Voice notes are optional: never block startup on them.
+        Err(e) => log::error!("Failed to initialize voice notes: {e}"),
+    }
     app_handle.manage(tray::TrayState::new());
 
     // Note: Shortcuts are NOT initialized here.
@@ -768,11 +776,24 @@ pub fn run(cli_args: CliArgs) {
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
             helpers::clamshell::is_laptop,
+            notes::commands::get_voice_notes,
+            notes::commands::get_voice_notes_status,
+            notes::commands::update_voice_notes_settings,
+            notes::commands::delete_voice_note,
+            notes::commands::open_voice_note,
+            notes::commands::open_voice_note_destination,
+            notes::commands::retry_voice_note_exports,
+            notes::commands::open_voice_notes_folder,
+            notes::commands::connect_notion,
+            notes::commands::disconnect_notion,
+            notes::commands::check_apple_notes_access,
+            notes::commands::open_voice_notes_privacy_settings,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,
             managers::transcription::StreamTextEvent,
             managers::transcription::StreamPhaseEvent,
+            notes::VoiceNotesChanged,
         ]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds

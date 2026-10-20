@@ -535,6 +535,9 @@ pub struct AppSettings {
     /// `overlay_position` (position `none` → style `None`).
     #[serde(default = "default_overlay_style")]
     pub overlay_style: OverlayStyle,
+    /// Voice notes (dedicated shortcut that saves instead of pasting).
+    #[serde(default)]
+    pub voice_notes: crate::notes::VoiceNotesSettings,
 }
 
 fn default_model() -> String {
@@ -947,6 +950,23 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_post_process_shortcut.to_string(),
         },
     );
+    // Avoids the dictation shortcuts and the macOS input-source switchers
+    // (Ctrl+Space, Ctrl+Option+Space).
+    #[cfg(target_os = "macos")]
+    let default_voice_note_shortcut = "ctrl+shift+space";
+    #[cfg(not(target_os = "macos"))]
+    let default_voice_note_shortcut = "ctrl+alt+space";
+    bindings.insert(
+        crate::notes::VOICE_NOTE_BINDING.to_string(),
+        ShortcutBinding {
+            id: crate::notes::VOICE_NOTE_BINDING.to_string(),
+            name: "Voice Note".to_string(),
+            description: "Records a thought and saves it as a note instead of pasting it."
+                .to_string(),
+            default_binding: default_voice_note_shortcut.to_string(),
+            current_binding: default_voice_note_shortcut.to_string(),
+        },
+    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
@@ -1022,6 +1042,7 @@ pub fn get_default_settings() -> AppSettings {
         vad_backend: VadBackend::default(),
         long_form_chunking: default_long_form_chunking(),
         overlay_style: default_overlay_style(),
+        voice_notes: crate::notes::VoiceNotesSettings::default(),
     }
 }
 
