@@ -61,6 +61,8 @@ const RecordingOverlay: React.FC = () => {
   // True once live text overflows the cap. A top overlay fades its top edge only
   // while overflowing, so the resting first line stays crisp flush under the pill.
   const [overflowing, setOverflowing] = useState(false);
+  // Name of the app style polishing this dictation (Style by app), if any.
+  const [styleLabel, setStyleLabel] = useState<string | null>(null);
 
   const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
   // Live-text scroll-back: the text region "sticks" to the newest line while the
@@ -82,6 +84,7 @@ const RecordingOverlay: React.FC = () => {
           smoothedLevelsRef.current = Array(16).fill(0);
           setLevels(Array(WAVE_BARS).fill(0));
           setStreamText({ committed: "", tentative: "" });
+          setStyleLabel(null);
         }
 
         await syncLanguageFromSettings();
@@ -112,6 +115,11 @@ const RecordingOverlay: React.FC = () => {
         setIsVisible(false);
         setCaptureReady(false);
       });
+
+      const unlistenStyle = await listen<string | null>(
+        "overlay-style",
+        (event) => setStyleLabel(event.payload ?? null),
+      );
 
       const unlistenReady = await listen("recording-ready", () => {
         setElapsed(0);
@@ -171,6 +179,7 @@ const RecordingOverlay: React.FC = () => {
         unlistenShow();
         unlistenHide();
         unlistenReady();
+        unlistenStyle();
         unlistenLevel();
         unlistenStream();
         unlistenPhase();
@@ -222,6 +231,10 @@ const RecordingOverlay: React.FC = () => {
 
   const fmtTime = (s: number) =>
     `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+  const processingLabel = styleLabel
+    ? t("overlay.processingStyle", { style: styleLabel })
+    : t("overlay.processing");
 
   const transcribingLabel = modelLoading
     ? t("overlay.loadingModel")
@@ -334,9 +347,7 @@ const RecordingOverlay: React.FC = () => {
           </div>
           {working
             ? workingRow(
-                workKind === "polishing"
-                  ? t("overlay.processing")
-                  : transcribingLabel,
+                workKind === "polishing" ? processingLabel : transcribingLabel,
                 true,
               )
             : listeningRow(open, true)}
@@ -350,7 +361,7 @@ const RecordingOverlay: React.FC = () => {
   // width between them; the cancel button is in both rows so it stays put.
   const working = state === "transcribing" || state === "processing";
   const workLabel =
-    state === "processing" ? t("overlay.processing") : transcribingLabel;
+    state === "processing" ? processingLabel : transcribingLabel;
 
   return (
     <div

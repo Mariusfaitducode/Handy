@@ -119,7 +119,11 @@ fn should_use_streaming_overlay(style: OverlayStyle, is_streaming: bool) -> bool
     style == OverlayStyle::Live && is_streaming
 }
 
-async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
+async fn post_process_transcription(
+    settings: &AppSettings,
+    transcription: &str,
+    prompt_id: Option<&str>,
+) -> Option<String> {
     if is_blank_transcription(transcription) {
         debug!("Post-processing skipped because the transcription is empty");
         return None;
@@ -147,8 +151,13 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
         return None;
     }
 
-    let selected_prompt_id = match &settings.post_process_selected_prompt_id {
-        Some(id) => id.clone(),
+    // An app-specific style (see app_styles) takes precedence over the
+    // prompt selected in settings.
+    let selected_prompt_id = match prompt_id
+        .map(str::to_string)
+        .or_else(|| settings.post_process_selected_prompt_id.clone())
+    {
+        Some(id) => id,
         None => {
             debug!("Post-processing skipped because no prompt is selected");
             return None;
@@ -355,6 +364,7 @@ pub(crate) async fn process_transcription_output(
     app: &AppHandle,
     transcription: &str,
     post_process: bool,
+    style_prompt_id: Option<String>,
 ) -> ProcessedTranscription {
     let settings = get_settings(app);
     let mut final_text = transcription.to_string();
@@ -362,11 +372,15 @@ pub(crate) async fn process_transcription_output(
     let mut post_process_prompt: Option<String> = None;
 
     if post_process {
-        if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
+        let prompt_id =
+            style_prompt_id.or_else(|| settings.post_process_selected_prompt_id.clone());
+        if let Some(processed_text) =
+            post_process_transcription(&settings, &final_text, prompt_id.as_deref()).await
+        {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 
-            if let Some(prompt_id) = &settings.post_process_selected_prompt_id {
+            if let Some(prompt_id) = &prompt_id {
                 if let Some(prompt) = settings
                     .post_process_prompts
                     .iter()
@@ -691,7 +705,19 @@ impl ShortcutAction for TranscribeAction {
                                 utils::redact_text(&transcription)
                             );
 
+                            // Style by app: look at the app the text is about to be
+                            // pasted into. Only for post-processed dictations, so
+                            // this costs nothing when post-processing is off.
+                            let style = if post_process {
+                                crate::app_styles::detect_and_resolve(&ah, &get_settings(&ah))
+                            } else {
+                                crate::app_styles::AppliedStyle {
+                                    prompt_id: None,
+                                    label: None,
+                                }
+                            };
                             if post_process {
+                                utils::emit_overlay_style(&ah, style.label.clone());
                                 if use_streaming_overlay {
                                     tm.emit_stream_working(StreamWorkKind::Polishing);
                                 } else {
@@ -699,7 +725,12 @@ impl ShortcutAction for TranscribeAction {
                                 }
                             }
                             let Some(processed) = complete_unless_cancelled(
-                                process_transcription_output(&ah, &transcription, post_process),
+                                process_transcription_output(
+                                    &ah,
+                                    &transcription,
+                                    post_process,
+                                    style.prompt_id,
+                                ),
                                 || rm.was_cancelled_since(cancel_generation),
                             )
                             .await

@@ -471,6 +471,18 @@ pub struct AppSettings {
     pub post_process_prompts: Vec<LLMPrompt>,
     #[serde(default)]
     pub post_process_selected_prompt_id: Option<String>,
+    /// Pick the post-processing prompt from the app being dictated into.
+    #[serde(default = "default_app_styles_enabled")]
+    pub app_styles_enabled: bool,
+    /// User overrides of the built-in app → style suggestions.
+    #[serde(default)]
+    pub app_style_rules: Vec<crate::app_styles::AppStyleRule>,
+    /// Apps recently dictated into, listed in settings for quick mapping.
+    #[serde(default)]
+    pub app_style_recent: Vec<crate::app_styles::AppStyleRecent>,
+    /// Whether the built-in style prompts were already added once.
+    #[serde(default)]
+    pub app_styles_seeded: bool,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -671,6 +683,10 @@ fn default_app_language() -> String {
 }
 
 fn default_show_tray_icon() -> bool {
+    true
+}
+
+fn default_app_styles_enabled() -> bool {
     true
 }
 
@@ -999,6 +1015,10 @@ pub fn get_default_settings() -> AppSettings {
         post_process_models: default_post_process_models(),
         post_process_prompts: default_post_process_prompts(),
         post_process_selected_prompt_id: None,
+        app_styles_enabled: default_app_styles_enabled(),
+        app_style_rules: Vec::new(),
+        app_style_recent: Vec::new(),
+        app_styles_seeded: false,
         mute_while_recording: false,
         append_trailing_space: false,
         app_language: default_app_language(),
@@ -1104,7 +1124,9 @@ pub fn get_settings(app: &AppHandle) -> AppSettings {
         default_settings
     };
 
-    if ensure_post_process_defaults(&mut settings) {
+    let post_process_changed = ensure_post_process_defaults(&mut settings);
+    let app_styles_changed = crate::app_styles::ensure_app_style_defaults(&mut settings);
+    if post_process_changed || app_styles_changed {
         store.set("settings", serde_json::to_value(&settings).unwrap());
     }
 
