@@ -4,5 +4,7 @@
 <dict>
   <key>NSMicrophoneUsageDescription</key>
   <string>Request microphone access to transcribe audio locally</string>
+  <key>NSAudioCaptureUsageDescription</key>
+  <string>In meeting mode, Handy records the sound of your calls so it can transcribe what the other participants say. Audio is transcribed on this Mac and never saved.</string>
 </dict>
 </plist>

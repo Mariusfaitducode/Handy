@@ -849,6 +849,24 @@ impl ShortcutAction for TestAction {
     }
 }
 
+// Meeting Action: one press starts a meeting, the next one stops it.
+struct ToggleMeetingAction;
+
+impl ShortcutAction for ToggleMeetingAction {
+    fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        let app = app.clone();
+        // Opening the microphone can take a moment; keep the shortcut thread free.
+        std::thread::spawn(move || {
+            crate::meeting::toggle_meeting_reporting_errors(
+                &app,
+                crate::meeting::MeetingSource::Shortcut,
+            );
+        });
+    }
+
+    fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {}
+}
+
 // Static Action Map
 pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::new(|| {
     let mut map = HashMap::new();
@@ -865,6 +883,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     map.insert(
         "cancel".to_string(),
         Arc::new(CancelAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        "toggle_meeting".to_string(),
+        Arc::new(ToggleMeetingAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "test".to_string(),

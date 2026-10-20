@@ -31,7 +31,13 @@ import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { WhatsNewGate } from "./components/whats-new";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
-import { commands } from "@/bindings";
+import { commands, events } from "@/bindings";
+import { meetingErrorMessage } from "@/components/settings/meetings/format";
+import { OPEN_SECTION_EVENT } from "@/components/settings/meetings/MeetingDetail";
+import {
+  OPEN_MEETING_EVENT,
+  useMeetingNavigation,
+} from "@/stores/meetingNavigationStore";
 import { deleteRetiredModel } from "@/components/onboarding/retiredModels";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
@@ -173,6 +179,34 @@ function App() {
       unlisten.then((fn) => fn());
     };
   }, [t]);
+
+  // Meetings: the recording indicator asks to show a meeting, a meeting page
+  // asks to show another section, and meeting actions started from the
+  // shortcut, tray or CLI report failures here (there is no button to show
+  // them on, so the window comes forward).
+  const openMeeting = useMeetingNavigation((state) => state.openMeeting);
+  useEffect(() => {
+    const opened = listen<number>(OPEN_MEETING_EVENT, (event) => {
+      openMeeting(event.payload);
+      setCurrentSection("meetings");
+    });
+    const failed = events.meetingErrorEvent.listen(async (event) => {
+      await commands.showMainWindowCommand().catch(() => {});
+      toast.error(meetingErrorMessage(event.payload.code, t));
+    });
+    const onOpenSection = (event: Event) => {
+      const section = (event as CustomEvent<string>).detail;
+      if (section in SECTIONS_CONFIG) {
+        setCurrentSection(section as SidebarSection);
+      }
+    };
+    window.addEventListener(OPEN_SECTION_EVENT, onOpenSection);
+    return () => {
+      opened.then((fn) => fn());
+      failed.then((fn) => fn());
+      window.removeEventListener(OPEN_SECTION_EVENT, onOpenSection);
+    };
+  }, [openMeeting, t]);
 
   // Listen for paste failures and show a toast.
   // The technical error detail is logged to handy.log on the Rust side

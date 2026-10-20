@@ -24,6 +24,23 @@ pub struct CliArgs {
     #[arg(long)]
     pub cancel: bool,
 
+    /// Start a meeting recording, or stop the one in progress (sent to
+    /// running instance)
+    #[arg(long)]
+    pub toggle_meeting: bool,
+
+    /// Start a meeting recording (sent to running instance)
+    #[arg(long)]
+    pub start_meeting: bool,
+
+    /// Stop the meeting recording in progress (sent to running instance)
+    #[arg(long)]
+    pub stop_meeting: bool,
+
+    /// Title for the meeting started by --start-meeting or --toggle-meeting
+    #[arg(long, value_name = "TITLE")]
+    pub meeting_title: Option<String>,
+
     /// Enable debug mode with verbose logging
     #[arg(long)]
     pub debug: bool,

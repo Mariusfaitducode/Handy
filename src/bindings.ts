@@ -947,6 +947,131 @@ async isLaptop() : Promise<Result<boolean, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async startMeeting(title: string | null) : Promise<Result<MeetingStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("start_meeting", { title }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async stopMeeting() : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("stop_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async pauseMeeting() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("pause_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async resumeMeeting() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("resume_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeetingStatus() : Promise<MeetingStatus> {
+    return await TAURI_INVOKE("get_meeting_status");
+},
+async listMeetings() : Promise<Result<MeetingRecord[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_meetings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeeting(id: number) : Promise<Result<MeetingDetail, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_meeting", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async renameMeeting(id: number, title: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("rename_meeting", { id, title }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteMeeting(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_meeting", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async regenerateMeetingSummary(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("regenerate_meeting_summary", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeetingCapabilities() : Promise<MeetingCapabilities> {
+    return await TAURI_INVOKE("get_meeting_capabilities");
+},
+async updateMeetingSettings(settings: MeetingSettings) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_meeting_settings", { settings }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Opens the pane where "System Audio Recording" access is granted.
+ */
+async openSystemAudioSettings() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_system_audio_settings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeetingText(id: number, part: MeetingTextPart) : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_meeting_text", { id, part }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Saves the meeting as Markdown in `dir` (remembered as the export folder),
+ * or in the saved export folder. Returns the file's path.
+ */
+async exportMeetingMarkdown(id: number, dir: string | null) : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("export_meeting_markdown", { id, dir }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async revealMeetingExport(path: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("reveal_meeting_export", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -955,10 +1080,20 @@ async isLaptop() : Promise<Result<boolean, string>> {
 
 export const events = __makeEvents__<{
 historyUpdatePayload: HistoryUpdatePayload,
+meetingErrorEvent: MeetingErrorEvent,
+meetingSegmentEvent: MeetingSegmentEvent,
+meetingSegmentRemovedEvent: MeetingSegmentRemovedEvent,
+meetingStatusEvent: MeetingStatusEvent,
+meetingUpdatedEvent: MeetingUpdatedEvent,
 streamPhaseEvent: StreamPhaseEvent,
 streamTextEvent: StreamTextEvent
 }>({
 historyUpdatePayload: "history-update-payload",
+meetingErrorEvent: "meeting-error-event",
+meetingSegmentEvent: "meeting-segment-event",
+meetingSegmentRemovedEvent: "meeting-segment-removed-event",
+meetingStatusEvent: "meeting-status-event",
+meetingUpdatedEvent: "meeting-updated-event",
 streamPhaseEvent: "stream-phase-event",
 streamTextEvent: "stream-text-event"
 })
@@ -1042,7 +1177,11 @@ long_form_chunking?: boolean;
  * not gated on this — that follows model capability. Migrated from the old
  * `overlay_position` (position `none` → style `None`).
  */
-overlay_style?: OverlayStyle }
+overlay_style?: OverlayStyle; 
+/**
+ * Meeting mode preferences (summary, export, retention, indicator).
+ */
+meeting?: MeetingSettings }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { transcribe: string[]; gpu_devices: GpuDeviceOption[] }
@@ -1077,6 +1216,133 @@ key_down: number; key_up: number; flags_changed: number; mouse: number; duration
 export type KeyboardImplementation = "tauri" | "handy_keys"
 export type LLMPrompt = { id: string; name: string; prompt: string }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * What the Meetings section needs to explain before anything is recorded.
+ */
+export type MeetingCapabilities = { 
+/**
+ * The other participants can be captured (macOS 14.2+).
+ */
+system_audio_supported: boolean; system_audio_permission: SystemAudioPermission; 
+/**
+ * "Provider · model" summaries are sent to, or `None` when none is set up.
+ */
+summary_model: string | null }
+export type MeetingDetail = { record: MeetingRecord; segments: MeetingSegment[] }
+/**
+ * Shown by the main window as a toast.
+ */
+export type MeetingErrorEvent = { code: string }
+export type MeetingPhase = "idle" | "recording" | "paused" | 
+/**
+ * Capture stopped; the last utterances are being transcribed.
+ */
+"finishing"
+export type MeetingRecord = { id: number; 
+/**
+ * `None` until the user names it; the UI shows the date instead.
+ */
+title: string | null; 
+/**
+ * What started it: "manual", "shortcut", "tray", "cli", "calendar".
+ */
+source: string; calendar_event_id: string | null; 
+/**
+ * Unix milliseconds.
+ */
+started_at: number; ended_at: number | null; 
+/**
+ * Recorded time, pauses excluded.
+ */
+duration_ms: number; status: MeetingRecordStatus; system_audio: SystemAudioState; summary: string | null; summary_status: SummaryStatus; summary_error: string | null; 
+/**
+ * "Provider · model" that wrote the summary.
+ */
+summary_model: string | null; segment_count: number }
+/**
+ * Where a meeting is in its life.
+ */
+export type MeetingRecordStatus = 
+/**
+ * Being captured right now.
+ */
+"recording" | 
+/**
+ * Capture ended; the last utterances and the summary are being produced.
+ */
+"processing" | "done" | 
+/**
+ * Handy quit or crashed while recording; what was transcribed is kept.
+ */
+"interrupted"
+/**
+ * How long meetings are kept before they are deleted automatically.
+ */
+export type MeetingRetention = "forever" | "days_30" | "days_90" | "year"
+/**
+ * One transcribed utterance.
+ */
+export type MeetingSegment = { id: number; speaker: Speaker; 
+/**
+ * Milliseconds since the meeting started (pauses excluded).
+ */
+start_ms: number; end_ms: number; text: string }
+/**
+ * A segment was added to a meeting's transcript.
+ */
+export type MeetingSegmentEvent = { meeting_id: number; segment: MeetingSegment }
+/**
+ * A segment was removed (it was the microphone echoing the speakers).
+ */
+export type MeetingSegmentRemovedEvent = { meeting_id: number; segment_id: number }
+/**
+ * Meeting preferences, stored as one object in the app settings.
+ */
+export type MeetingSettings = { 
+/**
+ * Write the minutes when a meeting ends (needs a configured model).
+ */
+auto_summary: boolean; 
+/**
+ * Folder Markdown exports go to; asked for on first export.
+ */
+export_dir: string | null; 
+/**
+ * Save each finished meeting as Markdown in `export_dir`.
+ */
+auto_export: boolean; retention: MeetingRetention; 
+/**
+ * The floating recording indicator. Off for people who share their
+ * screen and don't want it in the share.
+ */
+show_indicator: boolean }
+/**
+ * Snapshot of the meeting in progress.
+ */
+export type MeetingStatus = { phase: MeetingPhase; meeting_id: number | null; title: string | null; 
+/**
+ * Unix milliseconds.
+ */
+started_at: number | null; 
+/**
+ * Recorded time (pauses excluded) as of `as_of`. While recording, add
+ * the time since `as_of` to get the live value.
+ */
+elapsed_ms: number; as_of: number; system_audio: SystemAudioState | null; 
+/**
+ * Utterances cut but not transcribed yet.
+ */
+pending_utterances: number }
+/**
+ * Emitted whenever the meeting in progress changes phase.
+ */
+export type MeetingStatusEvent = MeetingStatus
+export type MeetingTextPart = "summary" | "transcript" | "markdown"
+/**
+ * A meeting's record changed (title, summary, status) or it was deleted:
+ * refetch it.
+ */
+export type MeetingUpdatedEvent = { meeting_id: number; deleted: boolean }
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 /**
@@ -1188,6 +1454,11 @@ export type ShortcutActivation =
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
 /**
+ * Who spoke. The microphone track is the user; the system track is everyone
+ * else on the call. Two tracks give this attribution without diarization.
+ */
+export type Speaker = "me" | "others"
+/**
  * Phase of the streaming overlay card, emitted to drive its UI state.
  */
 export type StreamPhase = 
@@ -1219,6 +1490,50 @@ export type StreamTextEvent = { committed: string; tentative: string }
  * Semantic kind of "working" phase, used to localize the spinner label.
  */
 export type StreamWorkKind = "transcribing" | "polishing"
+/**
+ * State of a meeting's written summary.
+ */
+export type SummaryStatus = 
+/**
+ * Not requested (yet).
+ */
+"none" | "pending" | "done" | "failed" | 
+/**
+ * No language model is configured; the transcript stands alone.
+ */
+"not_configured" | 
+/**
+ * Too little was said to summarize.
+ */
+"empty"
+/**
+ * What the OS reports about the "System Audio Recording" permission.
+ */
+export type SystemAudioPermission = "authorized" | "denied" | 
+/**
+ * Not asked yet, or the OS doesn't say. Starting a meeting asks.
+ */
+"unknown"
+/**
+ * Whether the other participants could be captured.
+ */
+export type SystemAudioState = 
+/**
+ * The computer's audio is captured on its own track.
+ */
+"captured" | 
+/**
+ * Not available on this OS (needs macOS 14.2+).
+ */
+"unsupported" | 
+/**
+ * The user refused "System Audio Recording" permission.
+ */
+"denied" | 
+/**
+ * Capture failed to start for another reason.
+ */
+"failed"
 /**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes Handy already ships.

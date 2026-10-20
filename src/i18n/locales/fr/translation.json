@@ -7,7 +7,11 @@
     "model": "Modèle",
     "quit": "Quitter",
     "cancel": "Annuler",
-    "secureInputWarning": "⚠ Raccourcis bloqués par Secure Input"
+    "secureInputWarning": "⚠ Raccourcis bloqués par Secure Input",
+    "startMeeting": "Enregistrer une réunion",
+    "stopMeeting": "Arrêter la réunion",
+    "pauseMeeting": "Mettre la réunion en pause",
+    "resumeMeeting": "Reprendre la réunion"
   },
   "sidebar": {
     "general": "Général",
@@ -16,7 +20,8 @@
     "postProcessing": "Post-traitement",
     "history": "Historique",
     "debug": "Débogage",
-    "about": "À propos"
+    "about": "À propos",
+    "meetings": "Réunions"
   },
   "onboarding": {
     "subtitle": "Pour commencer, choisissez un modèle de transcription",
@@ -171,6 +176,10 @@
           "transcribe_with_post_process": {
             "name": "Raccourci de post-traitement",
             "description": "Facultatif : Un raccourci dédié qui applique toujours le post-traitement IA à votre transcription."
+          },
+          "toggle_meeting": {
+            "name": "Raccourci de réunion",
+            "description": "Démarre l'enregistrement d'une réunion, ou arrête celle en cours."
           }
         },
         "errors": {
@@ -706,5 +715,150 @@
     "learnMore": "Comment résoudre ce problème",
     "recorderBlocked": "Impossible d'enregistrer un raccourci pour le moment : Secure Input de macOS bloque les événements clavier. Résolvez d'abord l'avertissement Secure Input.",
     "dismiss": "Ignorer"
+  },
+  "meetings": {
+    "title": "Réunions",
+    "privacy": "L'audio est transcrit sur ce Mac et n'est jamais enregistré. Seul le texte est conservé.",
+    "start": {
+      "titlePlaceholder": "Nom de la réunion (facultatif)",
+      "button": "Démarrer l'enregistrement",
+      "starting": "Démarrage…",
+      "hint": "Enregistre votre voix et le son de votre Mac : tous les participants de l'appel sont transcrits.",
+      "hintMicOnly": "Enregistre votre micro. Capter les autres participants nécessite macOS 14.2 ou plus récent.",
+      "shortcut": "Raccourci : {{shortcut}}"
+    },
+    "live": {
+      "recording": "Enregistrement",
+      "paused": "En pause",
+      "finishing": "Transcription des dernières phrases…",
+      "finishingCount_one": "Transcription de la dernière phrase…",
+      "finishingCount_other": "Transcription des {{count}} dernières phrases…",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "stop": "Arrêter",
+      "showTranscript": "Voir la transcription",
+      "untitled": "Réunion en cours"
+    },
+    "systemAudio": {
+      "denied": "Handy n'entend pas les autres participants : l'enregistrement du son du système a été refusé. Seul votre micro est transcrit.",
+      "unsupported": "Seul votre micro est transcrit : capter les autres participants nécessite macOS 14.2 ou plus récent.",
+      "failed": "Le son de votre Mac n'a pas pu être capté. Seul votre micro est transcrit.",
+      "openSettings": "Ouvrir les Réglages Système",
+      "promptHint": "La première fois, macOS demande d'autoriser Handy à enregistrer le son du système. Acceptez pour que les autres participants soient transcrits."
+    },
+    "list": {
+      "emptyTitle": "Aucune réunion pour l'instant",
+      "emptyBody": "Lancez l'enregistrement au début de votre appel. Handy transcrit tout le monde au fil de la discussion et rédige le compte rendu quand vous arrêtez.",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "untitled": "Réunion du {{date}}",
+      "status": {
+        "recording": "En cours",
+        "processing": "Transcription",
+        "summarizing": "Rédaction",
+        "summary": "Compte rendu",
+        "transcript": "Transcription seule",
+        "interrupted": "Interrompue",
+        "failed": "Compte rendu en échec"
+      },
+      "loadError": "Impossible de charger vos réunions."
+    },
+    "detail": {
+      "back": "Réunions",
+      "rename": "Renommer",
+      "renamePlaceholder": "Nom de la réunion",
+      "tabs": {
+        "summary": "Compte rendu",
+        "transcript": "Transcription"
+      },
+      "speakers": {
+        "me": "Moi",
+        "others": "Participants"
+      },
+      "copySummary": "Copier le compte rendu",
+      "copyTranscript": "Copier la transcription",
+      "copied": "Copié",
+      "copyError": "Impossible de copier dans le presse-papiers",
+      "export": "Exporter en Markdown",
+      "exported": "Enregistré dans {{folder}}",
+      "reveal": "Afficher dans le Finder",
+      "chooseFolder": "Choisissez où enregistrer vos réunions",
+      "delete": "Supprimer",
+      "deleteConfirm": "Supprimer cette réunion ?",
+      "deleteConfirmBody": "Sa transcription et son compte rendu seront effacés de ce Mac. Cette action est définitive.",
+      "cancel": "Annuler",
+      "notFound": "Cette réunion n'existe plus.",
+      "transcriptEmpty": "Rien n'a été transcrit.",
+      "transcriptWaiting": "À l'écoute… Les premières phrases s'affichent ici quelques secondes après avoir été prononcées.",
+      "micOnly": "Micro seul",
+      "withSystemAudio": "Micro et son du Mac",
+      "interrupted": "Handy s'est arrêté pendant cette réunion. La transcription est conservée jusqu'à ce moment."
+    },
+    "summary": {
+      "pending": "Rédaction du compte rendu…",
+      "inProgress": "Le compte rendu sera rédigé à la fin de la réunion.",
+      "writtenBy": "Rédigé par {{model}}",
+      "regenerate": "Réécrire",
+      "generate": "Rédiger le compte rendu",
+      "retry": "Réessayer",
+      "failed": "Le compte rendu n'a pas pu être rédigé.",
+      "empty": "Trop peu de choses ont été dites pour rédiger un compte rendu.",
+      "none": "Pas encore de compte rendu pour cette réunion.",
+      "notConfiguredTitle": "Le compte rendu nécessite un modèle de langage",
+      "notConfiguredBody": "La transcription est enregistrée. Pour obtenir un résumé, les décisions et les actions, activez le post-traitement dans Avancé, puis choisissez un fournisseur (OpenAI, Anthropic, un modèle local avec Ollama, Apple Intelligence…) dans Post-traitement.",
+      "openSettings": "Ouvrir les réglages"
+    },
+    "settings": {
+      "title": "Réglages des réunions",
+      "autoSummary": {
+        "label": "Rédiger le compte rendu automatiquement",
+        "description": "À la fin d'une réunion, sa transcription est envoyée à votre modèle de post-traitement pour en tirer un résumé, les décisions et les actions.",
+        "using": "Utilise {{model}}. La transcription est envoyée là, et nulle part ailleurs.",
+        "notConfigured": "Aucun modèle de langage n'est configuré : les réunions gardent seulement leur transcription."
+      },
+      "exportDir": {
+        "label": "Dossier d'export",
+        "description": "Où les réunions sont enregistrées en fichiers Markdown, par exemple le dossier de votre app de notes.",
+        "choose": "Choisir…",
+        "none": "Non défini"
+      },
+      "autoExport": {
+        "label": "Exporter chaque réunion",
+        "description": "Enregistre chaque réunion terminée, avec son compte rendu, en fichier Markdown dans le dossier d'export."
+      },
+      "retention": {
+        "label": "Conserver les réunions",
+        "description": "Les réunions plus anciennes sont effacées automatiquement de ce Mac.",
+        "forever": "Toujours",
+        "days_30": "30 jours",
+        "days_90": "90 jours",
+        "year": "1 an",
+        "confirmTitle": "Supprimer les réunions plus anciennes ?",
+        "confirmBody": "Les réunions de plus de {{period}} seront supprimées de ce Mac dès maintenant, puis automatiquement."
+      },
+      "indicator": {
+        "label": "Indicateur d'enregistrement flottant",
+        "description": "Une petite pastille en haut à droite de l'écran, avec la durée, la pause et l'arrêt. Désactivez-la si elle gêne vos partages d'écran."
+      }
+    },
+    "errors": {
+      "no_model": "Téléchargez d'abord un modèle de transcription, dans Modèles.",
+      "microphone_permission_denied": "Handy n'a pas accès au micro. Autorisez-le dans Réglages Système › Confidentialité et sécurité › Microphone.",
+      "no_input_device": "Aucun micro n'a été trouvé.",
+      "already_recording": "Une réunion est déjà en cours d'enregistrement.",
+      "still_finishing": "La réunion précédente est encore en cours de transcription. Réessayez dans un instant.",
+      "not_recording": "Aucune réunion n'est en cours d'enregistrement.",
+      "meeting_in_progress": "Cette réunion est encore en cours.",
+      "export_dir_missing": "Le dossier d'export n'existe plus. Choisissez-en un autre.",
+      "generic": "Une erreur est survenue : {{detail}}"
+    },
+    "indicator": {
+      "recording": "Réunion en cours d'enregistrement",
+      "paused": "Réunion en pause",
+      "open": "Ouvrir dans Handy",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "stop": "Arrêter et rédiger le compte rendu"
+    }
   }
 }
