@@ -2,6 +2,9 @@ fn main() {
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     build_apple_intelligence_bridge();
 
+    #[cfg(target_os = "macos")]
+    build_system_audio_bridge();
+
     generate_tray_translations();
 
     // Linux ships transcribe-cpp as a shared libtranscribe + loadable ggml
@@ -563,4 +566,116 @@ fn is_command_line_tools_only() -> bool {
         .and_then(|out| String::from_utf8(out.stdout).ok())
         .map(|path| path.trim().ends_with("CommandLineTools"))
         .unwrap_or(false)
+}
+
+/// Compile the meeting-mode system audio bridge (Core Audio process taps,
+/// macOS 14.2+) into a static library. The Swift side guards every tap API
+/// with `#available`, so the 11.0 deployment target still launches on older
+/// macOS; Rust checks `handy_system_audio_is_supported` before using it.
+#[cfg(target_os = "macos")]
+fn build_system_audio_bridge() {
+    use std::env;
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
+
+    const SWIFT_FILE: &str = "swift/system_audio_tap.swift";
+    println!("cargo:rerun-if-changed={SWIFT_FILE}");
+
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set"));
+    let object_path = out_dir.join("system_audio_tap.o");
+    let static_lib_path = out_dir.join("libhandy_system_audio.a");
+
+    let sdk_path = env::var("SDKROOT").unwrap_or_else(|_| {
+        String::from_utf8(
+            Command::new("xcrun")
+                .args(["--sdk", "macosx", "--show-sdk-path"])
+                .output()
+                .expect("Failed to locate macOS SDK")
+                .stdout,
+        )
+        .expect("SDK path is not valid UTF-8")
+        .trim()
+        .to_string()
+    });
+    let swiftc_path = env::var("SWIFTC").unwrap_or_else(|_| {
+        String::from_utf8(
+            Command::new("xcrun")
+                .args(["--find", "swiftc"])
+                .output()
+                .expect("Failed to locate swiftc")
+                .stdout,
+        )
+        .expect("swiftc path is not valid UTF-8")
+        .trim()
+        .to_string()
+    });
+
+    let arch = match env::var("CARGO_CFG_TARGET_ARCH").as_deref() {
+        Ok("x86_64") => "x86_64",
+        _ => "arm64",
+    };
+    let target = format!("{arch}-apple-macosx11.0");
+
+    let status = Command::new(&swiftc_path)
+        .args([
+            // Library mode: no `_main` in the object (see the Apple
+            // Intelligence bridge above for why that matters).
+            "-parse-as-library",
+            "-target",
+            &target,
+            "-sdk",
+            &sdk_path,
+            "-O",
+            "-c",
+            SWIFT_FILE,
+            "-o",
+            object_path
+                .to_str()
+                .expect("Failed to convert object path to string"),
+        ])
+        .status()
+        .expect("Failed to invoke swiftc for the system audio bridge");
+    if !status.success() {
+        panic!("swiftc failed to compile {SWIFT_FILE}");
+    }
+
+    let status = Command::new("libtool")
+        .args([
+            "-static",
+            "-o",
+            static_lib_path
+                .to_str()
+                .expect("Failed to convert static lib path to string"),
+            object_path
+                .to_str()
+                .expect("Failed to convert object path to string"),
+        ])
+        .status()
+        .expect("Failed to create static library for the system audio bridge");
+    if !status.success() {
+        panic!("libtool failed for the system audio bridge");
+    }
+
+    let toolchain_swift_lib = Path::new(&swiftc_path)
+        .parent()
+        .and_then(|p| p.parent())
+        .map(|root| root.join("lib/swift/macosx"))
+        .expect("Unable to determine Swift toolchain lib directory");
+    let sdk_swift_lib = Path::new(&sdk_path).join("usr/lib/swift");
+
+    println!("cargo:rustc-link-search=native={}", out_dir.display());
+    println!("cargo:rustc-link-lib=static=handy_system_audio");
+    println!(
+        "cargo:rustc-link-search=native={}",
+        toolchain_swift_lib.display()
+    );
+    println!("cargo:rustc-link-search=native={}", sdk_swift_lib.display());
+    println!("cargo:rustc-link-lib=framework=Foundation");
+    println!("cargo:rustc-link-lib=framework=AVFoundation");
+    // CoreAudio itself is weak-linked in main() so older macOS still launches.
+    // On Apple Silicon the Apple Intelligence bridge already adds this rpath;
+    // adding it twice produces a duplicate LC_RPATH, which recent dyld rejects.
+    if arch != "arm64" {
+        println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
+    }
 }
