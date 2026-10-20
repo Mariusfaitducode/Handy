@@ -880,6 +880,10 @@ pub fn change_whats_new_last_seen_version_setting(
 #[tauri::command]
 #[specta::specta]
 pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
+    // The dictionary owns custom words; it mirrors them back into settings.
+    if let Some(dictionary) = crate::dictionary::manager(&app) {
+        return dictionary.set_words(&words);
+    }
     let mut settings = settings::get_settings(&app);
     settings.custom_words = words;
     settings::write_settings(&app, settings);
