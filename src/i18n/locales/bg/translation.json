@@ -16,7 +16,8 @@
     "postProcessing": "Постобработка",
     "history": "История",
     "debug": "Отстраняване",
-    "about": "За приложението"
+    "about": "За приложението",
+    "notes": "Notes"
   },
   "onboarding": {
     "subtitle": "За да започнете, изберете модел за транскрипция",
@@ -144,6 +145,10 @@
           "transcribe_with_post_process": {
             "name": "Бърз клавиш за постобработка",
             "description": "По избор: отделна комбинация, която винаги прилага ИИ постобработка върху транскрипцията."
+          },
+          "voice_note": {
+            "name": "Voice Note Shortcut",
+            "description": "Records a thought and saves it as a note instead of typing it."
           }
         },
         "errors": {
@@ -691,7 +696,9 @@
   "overlay": {
     "transcribing": "Транскрибиране...",
     "processing": "Обработка...",
-    "loadingModel": "Зареждане на модела..."
+    "loadingModel": "Зареждане на модела...",
+    "noteSaved": "Note saved",
+    "noteFailed": "Note not saved"
   },
   "whatsNew": {
     "title": "Ново в Handy v{{version}}"
@@ -706,5 +713,136 @@
     "learnMore": "Как да поправите това",
     "recorderBlocked": "В момента не могат да се записват бързи клавиши — Secure Input на macOS блокира клавишните събития. Първо отстранете предупреждението за Secure Input.",
     "dismiss": "Отхвърляне"
+  },
+  "notes": {
+    "title": "Notes",
+    "searchPlaceholder": "Search notes",
+    "clearSearch": "Clear search",
+    "settingsButton": "Notes settings",
+    "back": "Back to notes",
+    "loading": "Loading notes…",
+    "loadError": "Couldn't load your notes.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "count_one": "{{count}} note",
+    "count_other": "{{count}} notes",
+    "noResults": "No notes match “{{query}}”.",
+    "empty": {
+      "title": "No notes yet",
+      "description": "Press {{shortcut}}, say what's on your mind, and it lands here. Nothing gets typed in the app you're using."
+    },
+    "disabled": {
+      "title": "Voice notes are off",
+      "description": "Turn them on to capture a thought with a dedicated shortcut, without typing it anywhere.",
+      "enable": "Turn on"
+    },
+    "row": {
+      "expand": "Show the full note",
+      "collapse": "Collapse",
+      "aiProcessed": "Title and cleanup by AI",
+      "showOriginal": "Show what you said",
+      "hideOriginal": "Hide what you said",
+      "exportProblem": "A destination could not be updated"
+    },
+    "actions": {
+      "copy": "Copy",
+      "open": "Open",
+      "delete": "Delete",
+      "retry": "Retry"
+    },
+    "toasts": {
+      "deleted": "Note deleted",
+      "undo": "Undo",
+      "deleteLeftUntouched": "Note deleted from Handy. Its journal file was edited by hand, so it was left as is.",
+      "deleteError": "Couldn't delete the note.",
+      "openError": "Couldn't open the note.",
+      "copyError": "Couldn't copy the note.",
+      "retryError": "Couldn't retry.",
+      "saveError": "Couldn't save the setting."
+    },
+    "destinations": {
+      "markdown": "Markdown",
+      "notion": "Notion",
+      "apple_notes": "Apple Notes",
+      "pending": "{{name}}: sending…",
+      "done": "{{name}}: open",
+      "failed": "{{name}}: failed"
+    },
+    "errors": {
+      "permission_denied": "Handy can't write to this folder. Allow access in System Settings › Privacy & Security › Files and Folders.",
+      "io": "The note couldn't be written to the folder.",
+      "notion_invalid_token": "Notion rejected the token. Check it in your integration settings.",
+      "notion_page_not_found": "Notion can't see this page. Open it in Notion, then ••• › Connections › add your integration.",
+      "notion_invalid_page_link": "This doesn't look like a Notion page link.",
+      "notion_network": "Couldn't reach Notion. Check your connection.",
+      "notion_api": "Notion returned an error.",
+      "notion_token_missing": "Notion is no longer connected. Reconnect it in the notes settings.",
+      "notion_keychain": "Couldn't store the token securely.",
+      "apple_notes_denied": "Handy isn't allowed to control Notes. Allow it in System Settings › Privacy & Security › Automation.",
+      "apple_notes_failed": "Apple Notes returned an error.",
+      "generic": "Something went wrong."
+    },
+    "settings": {
+      "title": "Notes settings",
+      "capture": {
+        "title": "Capture",
+        "enabled": {
+          "label": "Voice notes",
+          "description": "A dedicated shortcut that saves what you say as a note instead of typing it."
+        },
+        "ai": {
+          "label": "AI title and cleanup",
+          "description": "Gives each note a title and removes hesitations, using your post-processing provider. Your words and your language are kept.",
+          "using": "Uses {{provider}}.",
+          "unavailableDisabled": "Turn on post-processing (Advanced › Experimental) and choose a provider to use this. Until then, the title comes from your first words.",
+          "unavailableNoProvider": "Choose a provider, model and API key in Post Process to use this. Until then, the title comes from your first words."
+        }
+      },
+      "markdown": {
+        "title": "Markdown folder",
+        "enabled": {
+          "label": "Save to a folder",
+          "description": "Plain Markdown files you can open in Obsidian, iA Writer or any editor."
+        },
+        "folder": {
+          "label": "Folder",
+          "description": "Where notes are written. Defaults to Documents › Handy Notes.",
+          "choose": "Choose…",
+          "reset": "Use default",
+          "open": "Open"
+        },
+        "layout": {
+          "label": "Files",
+          "description": "A journal file per day with one section per note, or one file per note.",
+          "daily": "One per day",
+          "per_note": "One per note"
+        }
+      },
+      "notion": {
+        "title": "Notion",
+        "description": "Each note becomes a page under a page you choose.",
+        "token": {
+          "label": "Integration token",
+          "placeholder": "ntn_…",
+          "help": "Create an internal integration at notion.so/profile/integrations, copy its token, then add the integration to the parent page (••• › Connections)."
+        },
+        "page": {
+          "label": "Parent page",
+          "placeholder": "Paste the page link"
+        },
+        "connect": "Connect",
+        "connecting": "Checking…",
+        "connected": "Notes go to “{{page}}”.",
+        "connectedUntitled": "Connected.",
+        "disconnect": "Disconnect",
+        "keychain": "The token is kept in your Keychain (or a file only you can read), never in Handy's settings file."
+      },
+      "appleNotes": {
+        "title": "Apple Notes",
+        "label": "Add to Apple Notes",
+        "description": "Each note is also added to a “Handy” folder in Notes. macOS asks for permission the first time.",
+        "openSettings": "Open System Settings"
+      }
+    }
   }
 }
