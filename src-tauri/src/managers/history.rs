@@ -389,6 +389,45 @@ impl HistoryManager {
         Ok(entry)
     }
 
+    /// Replace an entry's text with the user's correction.
+    pub fn update_transcription_text(&self, id: i64, text: &str) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let updated = conn.execute(
+            "UPDATE transcription_history SET transcription_text = ?1 WHERE id = ?2",
+            params![text, id],
+        )?;
+        if updated == 0 {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+        let entry = conn.query_row(
+            "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+             FROM transcription_history WHERE id = ?1",
+            params![id],
+            Self::map_history_entry,
+        )?;
+        if let Err(e) = (HistoryUpdatePayload::Updated {
+            entry: entry.clone(),
+        })
+        .emit(&self.app_handle)
+        {
+            error!("Failed to emit history-updated event: {}", e);
+        }
+        Ok(entry)
+    }
+
+    /// Texts of the most recent non-empty transcriptions, newest first.
+    pub fn recent_transcriptions(&self, limit: usize) -> Result<Vec<String>> {
+        let conn = self.get_connection()?;
+        let mut stmt = conn.prepare(
+            "SELECT transcription_text FROM transcription_history
+             WHERE transcription_text != '' ORDER BY id DESC LIMIT ?1",
+        )?;
+        let texts = stmt
+            .query_map(params![limit as i64], |row| row.get::<_, String>(0))?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(texts)
+    }
+
     pub fn cleanup_old_entries(&self) -> Result<()> {
         let retention_period = crate::settings::get_recording_retention_period(&self.app_handle);
 

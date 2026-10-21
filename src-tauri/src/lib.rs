@@ -11,6 +11,7 @@ mod chinese_script;
 pub mod cli;
 mod clipboard;
 mod commands;
+mod dictionary;
 pub mod engine_supervisor;
 mod helpers;
 mod input;
@@ -210,6 +211,15 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     );
     let history_manager =
         Arc::new(HistoryManager::new(app_handle).expect("Failed to initialize history manager"));
+    // The dictionary is optional: a failure leaves custom words in settings working.
+    match dictionary::DictionaryManager::new(app_handle) {
+        Ok(dictionary_manager) => {
+            let dictionary_manager = Arc::new(dictionary_manager);
+            dictionary_manager.start_background_sync();
+            app_handle.manage(dictionary_manager);
+        }
+        Err(e) => log::error!("Failed to initialize dictionary: {}", e),
+    }
 
     // Add managers to Tauri's managed state
     app_handle.manage(recording_manager.clone());
@@ -801,6 +811,17 @@ pub fn run(cli_args: CliArgs) {
             commands::history::retry_history_entry_transcription,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
+            commands::history::update_history_entry_text,
+            commands::dictionary::get_dictionary,
+            commands::dictionary::add_dictionary_entry,
+            commands::dictionary::remove_dictionary_entry,
+            commands::dictionary::set_dictionary_author,
+            commands::dictionary::set_dictionary_sync_folder,
+            commands::dictionary::sync_dictionary_now,
+            commands::dictionary::export_dictionary,
+            commands::dictionary::import_dictionary,
+            commands::dictionary::get_dictionary_suggestions,
+            commands::dictionary::dismiss_dictionary_suggestion,
             helpers::clamshell::is_laptop,
             meeting::commands::start_meeting,
             meeting::commands::stop_meeting,
@@ -828,6 +849,7 @@ pub fn run(cli_args: CliArgs) {
             meeting::MeetingSegmentRemovedEvent,
             meeting::MeetingUpdatedEvent,
             meeting::MeetingErrorEvent,
+            dictionary::DictionaryChangedEvent,
         ]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds

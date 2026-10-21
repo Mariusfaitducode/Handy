@@ -976,6 +976,106 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
+ * Saves the user's correction of a transcription and returns what the
+ * dictionary could learn from it. Nothing is added until the user confirms.
+ */
+async updateHistoryEntryText(id: number, text: string) : Promise<Result<DictionarySuggestion[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_history_entry_text", { id, text }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getDictionary() : Promise<DictionarySnapshot> {
+    return await TAURI_INVOKE("get_dictionary");
+},
+/**
+ * Adds a vocabulary word (`to` empty) or a "heard → written" replacement.
+ * Errors are codes the UI translates: `empty`, `too_long`, `duplicate`.
+ */
+async addDictionaryEntry(from: string, to: string | null) : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_dictionary_entry", { from, to }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async removeDictionaryEntry(id: string) : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("remove_dictionary_entry", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setDictionaryAuthor(name: string) : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_dictionary_author", { name }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setDictionarySyncFolder(folder: string | null) : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_dictionary_sync_folder", { folder }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async syncDictionaryNow() : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_dictionary_now") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Writes the live entries to `path`; returns how many were exported.
+ */
+async exportDictionary(path: string) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("export_dictionary", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Merges a dictionary file into this one. Never removes anything.
+ */
+async importDictionary(path: string) : Promise<Result<ImportSummary, SyncError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("import_dictionary", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Proper nouns that keep coming back in recent dictations.
+ */
+async getDictionarySuggestions() : Promise<Result<DictionarySuggestion[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_dictionary_suggestions") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async dismissDictionarySuggestion(key: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("dismiss_dictionary_suggestion", { key }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
  * This uses pmset to check for battery information.
@@ -1120,6 +1220,7 @@ async revealMeetingExport(path: string) : Promise<Result<null, string>> {
 
 
 export const events = __makeEvents__<{
+dictionaryChangedEvent: DictionaryChangedEvent,
 historyUpdatePayload: HistoryUpdatePayload,
 meetingErrorEvent: MeetingErrorEvent,
 meetingSegmentEvent: MeetingSegmentEvent,
@@ -1129,6 +1230,7 @@ meetingUpdatedEvent: MeetingUpdatedEvent,
 streamPhaseEvent: StreamPhaseEvent,
 streamTextEvent: StreamTextEvent
 }>({
+dictionaryChangedEvent: "dictionary-changed-event",
 historyUpdatePayload: "history-update-payload",
 meetingErrorEvent: "meeting-error-event",
 meetingSegmentEvent: "meeting-segment-event",
@@ -1185,7 +1287,11 @@ whats_new_last_seen_version?: string; selected_model?: string; onboarding_comple
  * Which input channel to use on the selected microphone device.
  * None means "average all channels" (original behavior).
  */
-selected_channel?: number | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; 
+selected_channel?: number | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
+/**
+ * Derived from the dictionary; edit through the dictionary commands.
+ */
+dictionary_replacements?: WordReplacement[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; 
 /**
  * Pick the post-processing prompt from the app being dictated into.
  */
@@ -1287,6 +1393,73 @@ export type ChineseScript =
 "as_transcribed" | "simplified" | "traditional"
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
+/**
+ * Emitted whenever the dictionary changes, including from a background sync.
+ */
+export type DictionaryChangedEvent = { 
+/**
+ * Entries a sync just brought in from the shared folder.
+ */
+received: MergeStats }
+export type DictionaryEntry = { id: string; kind: EntryKind; 
+/**
+ * Word: the term itself. Replacement: what the model writes by mistake.
+ */
+from: string; 
+/**
+ * Replacement only: what should be written instead. Empty for words.
+ */
+to?: string; 
+/**
+ * Display name of whoever added (or last re-added) the entry.
+ */
+added_by?: string; 
+/**
+ * Milliseconds since the Unix epoch.
+ */
+created_at?: number; 
+/**
+ * Milliseconds since the Unix epoch; drives conflict resolution.
+ */
+updated_at?: number; 
+/**
+ * Tombstone: kept so deletions propagate through sync.
+ */
+deleted?: boolean }
+/**
+ * Everything the dictionary page shows.
+ */
+export type DictionarySnapshot = { 
+/**
+ * Live entries, newest first.
+ */
+entries: DictionaryEntry[]; 
+/**
+ * The name stamped on entries added on this Mac.
+ */
+author: string; sync: SyncStatus }
+export type DictionarySuggestion = { 
+/**
+ * Stable key used to dismiss the suggestion for good.
+ */
+key: string; kind: EntryKind; from: string; 
+/**
+ * Replacement target; empty for words.
+ */
+to: string; 
+/**
+ * How often a recurring name was seen (recurring suggestions only).
+ */
+occurrences: number | null }
+export type EntryKind = 
+/**
+ * A term the model should know (sent as vocabulary when supported).
+ */
+"word" | 
+/**
+ * "Heard → written": rewritten after transcription.
+ */
+"replacement"
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean; 
 /**
@@ -1306,6 +1479,7 @@ export type ImplementationChangeResult = { success: boolean;
  * List of binding IDs that were reset to defaults due to incompatibility
  */
 reset_bindings: string[] }
+export type ImportSummary = { stats: MergeStats; snapshot: DictionarySnapshot }
 export type KeyboardDiagnosticReport = { secure_input_enabled: boolean; culprit_pid: number | null; culprit_name: string | null; 
 /**
  * Counts only — key identity is deliberately never captured.
@@ -1441,6 +1615,7 @@ export type MeetingTextPart = "summary" | "transcript" | "markdown"
  * refetch it.
  */
 export type MeetingUpdatedEvent = { meeting_id: number; deleted: boolean }
+export type MergeStats = { added: number; updated: number; removed: number }
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 /**
@@ -1589,6 +1764,17 @@ export type StreamTextEvent = { committed: string; tentative: string }
  * Semantic kind of "working" phase, used to localize the spinner label.
  */
 export type StreamWorkKind = "transcribing" | "polishing"
+export type SyncError = { kind: SyncErrorKind; detail: string }
+/**
+ * Why a sync or import did not go through. The frontend turns the kind into
+ * a sentence; `detail` is only for the logs.
+ */
+export type SyncErrorKind = "folder_missing" | 
+/**
+ * iCloud has the file but has not downloaded it to this Mac yet.
+ */
+"not_downloaded" | "unreadable" | "write_failed"
+export type SyncStatus = { folder: string | null; last_sync_at: number | null; error: SyncError | null }
 /**
  * State of a meeting's written summary.
  */
@@ -1642,6 +1828,11 @@ export type TranscribeAcceleratorSetting = "auto" | "cpu" | "gpu"
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
 export type VadBackend = "silero" | "earshot"
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
+/**
+ * A dictionary "heard → written" pair, mirrored from the dictionary so the
+ * transcription pipeline can apply it (see `crate::dictionary`).
+ */
+export type WordReplacement = { from: string; to: string }
 
 /** tauri-specta globals **/
 

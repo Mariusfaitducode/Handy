@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
+  BookA,
   Cog,
   FlaskConical,
   History,
@@ -17,6 +18,7 @@ import {
   GeneralSettings,
   AdvancedSettings,
   HistorySettings,
+  DictionarySettings,
   DebugSettings,
   AboutSettings,
   PostProcessingSettings,
@@ -59,6 +61,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.meetings",
     icon: Users,
     component: MeetingsSettings,
+    enabled: () => true,
+  },
+  dictionary: {
+    labelKey: "sidebar.dictionary",
+    icon: BookA,
+    component: DictionarySettings,
     enabled: () => true,
   },
   models: {

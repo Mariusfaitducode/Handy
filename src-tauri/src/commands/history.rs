@@ -1,4 +1,5 @@
 use crate::actions::process_transcription_output;
+use crate::dictionary::{suggest::DictionarySuggestion, DictionaryManager};
 use crate::managers::{
     history::{HistoryManager, PaginatedHistory},
     transcription::TranscriptionManager,
@@ -169,4 +170,33 @@ pub async fn update_recording_retention_period(
         .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+/// Saves the user's correction of a transcription and returns what the
+/// dictionary could learn from it. Nothing is added until the user confirms.
+#[tauri::command]
+#[specta::specta]
+pub async fn update_history_entry_text(
+    history_manager: State<'_, Arc<HistoryManager>>,
+    dictionary: State<'_, Arc<DictionaryManager>>,
+    id: i64,
+    text: String,
+) -> Result<Vec<DictionarySuggestion>, String> {
+    let text = text.trim().to_string();
+    if text.is_empty() {
+        return Err("empty".to_string());
+    }
+    let original = history_manager
+        .get_entry_by_id(id)
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| format!("History entry {} not found", id))?
+        .transcription_text;
+    if original == text {
+        return Ok(Vec::new());
+    }
+    history_manager
+        .update_transcription_text(id, &text)
+        .map_err(|e| e.to_string())?;
+    Ok(dictionary.suggestions_for_edit(&original, &text))
 }
