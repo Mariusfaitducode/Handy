@@ -1242,7 +1242,7 @@
       "notion_network": "Couldn't reach Notion. Check your connection.",
       "notion_api": "Notion returned an error.",
       "notion_token_missing": "Notion is no longer connected. Reconnect it in the notes settings.",
-      "notion_keychain": "Couldn't store the token in the Keychain.",
+      "notion_keychain": "Couldn't store the token securely.",
       "apple_notes_denied": "Handy isn't allowed to control Notes. Allow it in System Settings › Privacy & Security › Automation.",
       "apple_notes_failed": "Apple Notes returned an error.",
       "generic": "Something went wrong."
@@ -1300,7 +1300,7 @@
         "connected": "Notes go to “{{page}}”.",
         "connectedUntitled": "Connected.",
         "disconnect": "Disconnect",
-        "keychain": "The token is kept in your Keychain, never in Handy's settings file."
+        "keychain": "The token is kept in your Keychain (or a file only you can read), never in Handy's settings file."
       },
       "appleNotes": {
         "title": "Apple Notes",

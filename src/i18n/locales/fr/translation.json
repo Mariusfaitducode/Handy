@@ -1242,7 +1242,7 @@
       "notion_network": "Impossible de joindre Notion. Vérifiez votre connexion.",
       "notion_api": "Notion a renvoyé une erreur.",
       "notion_token_missing": "Notion n'est plus connecté. Reconnectez-le dans les réglages des notes.",
-      "notion_keychain": "Impossible d'enregistrer le jeton dans le trousseau.",
+      "notion_keychain": "Impossible d'enregistrer le jeton de façon sécurisée.",
       "apple_notes_denied": "Handy n'est pas autorisé à contrôler Notes. Autorisez-le dans Réglages Système › Confidentialité et sécurité › Automatisation.",
       "apple_notes_failed": "Apple Notes a renvoyé une erreur.",
       "generic": "Une erreur est survenue."
@@ -1300,7 +1300,7 @@
         "connected": "Les notes vont dans « {{page}} ».",
         "connectedUntitled": "Connecté.",
         "disconnect": "Déconnecter",
-        "keychain": "Le jeton est gardé dans votre trousseau, jamais dans le fichier de réglages de Handy."
+        "keychain": "Le jeton est gardé dans votre trousseau (ou un fichier lisible par vous seul), jamais dans le fichier de réglages de Handy."
       },
       "appleNotes": {
         "title": "Apple Notes",
