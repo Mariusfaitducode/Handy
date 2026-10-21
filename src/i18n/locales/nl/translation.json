@@ -859,6 +859,75 @@
       "pause": "Pause",
       "resume": "Resume",
       "stop": "Stop and write the minutes"
+    },
+    "calendar": {
+      "title": "Upcoming meetings",
+      "connect": {
+        "body": "Handy can offer to record your video calls a minute before they start, from the events in Calendar (iCloud, Google, Exchange…). Handy only reads your calendar.",
+        "button": "Connect calendar",
+        "connecting": "Connecting…"
+      },
+      "denied": "Handy can't read your calendar, so it can't offer to record your calls.",
+      "openSettings": "Open System Settings",
+      "error": "Something went wrong with the calendar. Please try again.",
+      "notifications": {
+        "denied": "Handy's notifications are turned off: you won't see the offers to record.",
+        "notDetermined": "Allow notifications so Handy can offer to record a minute before each call.",
+        "allow": "Allow notifications",
+        "unavailable": "Offers to record will show up in this window (notifications need the installed app)."
+      },
+      "empty": "No video calls planned between now and tomorrow evening.",
+      "now": "Now",
+      "tomorrow": "Tomorrow",
+      "untitled": "Untitled",
+      "with": "With {{names}}",
+      "withMany": "With {{names}} and {{count}} more",
+      "status": {
+        "ask": "Offered 1 min before",
+        "auto": "Recorded automatically",
+        "recording": "Recording",
+        "skipped": "Skipped",
+        "noAttendees": "No invitees"
+      },
+      "skip": "Skip",
+      "restore": "Undo",
+      "record": "Record",
+      "join": "Join",
+      "prompt": {
+        "soonTitle": "“{{title}}” starts in 1 min",
+        "soonBody": "Record and transcribe this meeting?",
+        "autoBody": "Recording will start automatically.",
+        "endedTitle": "“{{title}}” seems to be over",
+        "endedBody": "Nobody has spoken for a few minutes. Stop recording?",
+        "record": "Record",
+        "ignore": "Ignore",
+        "dontRecord": "Don't record",
+        "stop": "Stop",
+        "keep": "Keep recording"
+      },
+      "settings": {
+        "title": "Calendar",
+        "mode": {
+          "label": "Calendar meetings",
+          "description": "What Handy does a minute before a video call in your calendar. After the scheduled end, once nobody has spoken for a few minutes, Handy offers to stop.",
+          "ask": "Ask",
+          "auto": "Record automatically",
+          "off": "Off"
+        },
+        "onlyVideo": {
+          "label": "Video calls only",
+          "description": "Only events with a Google Meet, Zoom, Teams, Webex or FaceTime link (in the location, notes or URL)."
+        },
+        "skipAlone": {
+          "label": "Skip events without invitees",
+          "description": "Leaves out events where you are the only person invited, such as focus blocks with a link."
+        },
+        "calendars": {
+          "label": "Followed calendars",
+          "description": "Only events from these calendars are offered. New calendars are followed.",
+          "none": "No calendars found. Add your accounts in the Calendar app."
+        }
+      }
     }
   }
 }

@@ -10,6 +10,7 @@ import type {
   ShortcutActivation,
   VadBackend,
   MeetingSettings,
+  CalendarSettings,
 } from "@/bindings";
 import { commands } from "@/bindings";
 import { toast } from "sonner";
@@ -88,6 +89,14 @@ const DEFAULT_AUDIO_DEVICE: AudioDevice = {
 const settingUpdaters: {
   [K in keyof Settings]?: (value: Settings[K]) => Promise<unknown>;
 } = {
+  calendar: async (value) => {
+    const result = await commands.updateCalendarSettings(
+      value as CalendarSettings,
+    );
+    if (result.status === "error") {
+      throw new Error(result.error);
+    }
+  },
   meeting: async (value) => {
     const result = await commands.updateMeetingSettings(
       value as MeetingSettings,

@@ -859,6 +859,75 @@
       "pause": "Pause",
       "resume": "Reprendre",
       "stop": "Arrêter et rédiger le compte rendu"
+    },
+    "calendar": {
+      "title": "Prochaines réunions",
+      "connect": {
+        "body": "Handy peut vous proposer d'enregistrer vos visios une minute avant qu'elles commencent, à partir de votre Calendrier (iCloud, Google, Exchange…). Handy se contente de le lire.",
+        "button": "Connecter le calendrier",
+        "connecting": "Connexion…"
+      },
+      "denied": "Handy n'a pas accès à votre calendrier et ne peut donc pas vous proposer d'enregistrer vos appels.",
+      "openSettings": "Ouvrir les Réglages Système",
+      "error": "Un problème est survenu avec le calendrier. Réessayez.",
+      "notifications": {
+        "denied": "Les notifications de Handy sont désactivées : vous ne verrez pas les propositions d'enregistrement.",
+        "notDetermined": "Autorisez les notifications pour que Handy vous propose d'enregistrer une minute avant chaque appel.",
+        "allow": "Autoriser les notifications",
+        "unavailable": "Les propositions d'enregistrement s'afficheront dans cette fenêtre (les notifications nécessitent l'app installée)."
+      },
+      "empty": "Aucune visio prévue d'ici demain soir.",
+      "now": "En cours",
+      "tomorrow": "Demain",
+      "untitled": "Sans titre",
+      "with": "Avec {{names}}",
+      "withMany": "Avec {{names}} et {{count}} autres",
+      "status": {
+        "ask": "Proposée 1 min avant",
+        "auto": "Enregistrée automatiquement",
+        "recording": "Enregistrement",
+        "skipped": "Ignorée",
+        "noAttendees": "Sans invités"
+      },
+      "skip": "Ignorer",
+      "restore": "Annuler",
+      "record": "Enregistrer",
+      "join": "Rejoindre",
+      "prompt": {
+        "soonTitle": "Réunion « {{title}} » dans 1 min",
+        "soonBody": "Enregistrer et transcrire cette réunion ?",
+        "autoBody": "L'enregistrement démarrera automatiquement.",
+        "endedTitle": "« {{title}} » semble terminée",
+        "endedBody": "Plus personne ne parle depuis quelques minutes. Arrêter l'enregistrement ?",
+        "record": "Enregistrer",
+        "ignore": "Ignorer",
+        "dontRecord": "Ne pas enregistrer",
+        "stop": "Arrêter",
+        "keep": "Continuer"
+      },
+      "settings": {
+        "title": "Calendrier",
+        "mode": {
+          "label": "Réunions du calendrier",
+          "description": "Ce que fait Handy une minute avant une visio de votre calendrier. Après l'heure de fin prévue, quand plus personne ne parle depuis quelques minutes, Handy propose d'arrêter.",
+          "ask": "Demander",
+          "auto": "Enregistrer automatiquement",
+          "off": "Désactivé"
+        },
+        "onlyVideo": {
+          "label": "Visios uniquement",
+          "description": "Seulement les événements avec un lien Google Meet, Zoom, Teams, Webex ou FaceTime (dans le lieu, les notes ou l'URL)."
+        },
+        "skipAlone": {
+          "label": "Ignorer les événements sans invités",
+          "description": "Écarte les événements où vous êtes seul invité, comme les plages de concentration avec un lien."
+        },
+        "calendars": {
+          "label": "Calendriers suivis",
+          "description": "Seuls les événements de ces calendriers sont proposés. Les nouveaux calendriers sont suivis.",
+          "none": "Aucun calendrier trouvé. Ajoutez vos comptes dans l'app Calendrier."
+        }
+      }
     }
   }
 }

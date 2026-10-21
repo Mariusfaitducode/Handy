@@ -538,6 +538,9 @@ pub struct AppSettings {
     /// Meeting mode preferences (summary, export, retention, indicator).
     #[serde(default)]
     pub meeting: crate::meeting::MeetingSettings,
+    /// Calendar auto-start (mode, followed calendars, per-event choices).
+    #[serde(default)]
+    pub calendar: crate::calendar::CalendarSettings,
 }
 
 fn default_model() -> String {
@@ -1040,6 +1043,7 @@ pub fn get_default_settings() -> AppSettings {
         long_form_chunking: default_long_form_chunking(),
         overlay_style: default_overlay_style(),
         meeting: crate::meeting::MeetingSettings::default(),
+        calendar: crate::calendar::CalendarSettings::default(),
     }
 }
 

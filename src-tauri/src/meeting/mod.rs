@@ -14,7 +14,8 @@
 //! [`start_meeting`], [`stop_meeting`], [`pause_meeting`], [`resume_meeting`]
 //! and [`current_status`], and follow them through the
 //! [`MeetingStatusEvent`] / [`MeetingSegmentEvent`] / [`MeetingUpdatedEvent`]
-//! events. All of them are safe to call from any thread.
+//! events. [`set_meeting_participants`] passes the invitees on to the
+//! minutes. All of them are safe to call from any thread.
 //!
 //! # Privacy
 //!
@@ -643,6 +644,7 @@ impl MeetingManager {
         let language = summary::SummaryLanguage::from_app_language(&settings.app_language);
         let input = summary::SummaryInput {
             title: record.title.as_deref(),
+            participants: &record.participants,
             duration_ms: record.duration_ms,
             segments: &segments,
             language,
@@ -722,6 +724,14 @@ impl MeetingManager {
         }
         self.store.delete(id).map_err(|e| e.to_string())?;
         self.emit_updated(id, true);
+        Ok(())
+    }
+
+    pub fn set_participants(&self, id: i64, participants: &[String]) -> Result<(), String> {
+        self.store
+            .set_participants(id, participants)
+            .map_err(|e| e.to_string())?;
+        self.emit_updated(id, false);
         Ok(())
     }
 
@@ -807,6 +817,18 @@ pub fn stop_meeting(app: &AppHandle) -> Result<i64, MeetingError> {
     manager(app)?.stop()
 }
 
+/// Names the people invited to a meeting, for its minutes (calendar
+/// auto-start knows them from the event).
+pub fn set_meeting_participants(
+    app: &AppHandle,
+    meeting_id: i64,
+    participants: &[String],
+) -> Result<(), MeetingError> {
+    manager(app)?
+        .set_participants(meeting_id, participants)
+        .map_err(MeetingError::Other)
+}
+
 pub fn pause_meeting(app: &AppHandle) -> Result<(), MeetingError> {
     manager(app)?.set_paused(true)
 }
@@ -863,7 +885,7 @@ pub struct MeetingErrorEvent {
     pub code: String,
 }
 
-fn report_error(app: &AppHandle, error: &MeetingError) {
+pub(crate) fn report_error(app: &AppHandle, error: &MeetingError) {
     warn!("Meeting action failed: {error}");
     let _ = MeetingErrorEvent { code: error.code() }.emit(app);
 }
