@@ -73,6 +73,9 @@ pub(crate) enum CaptureOutcome {
     Empty,
     /// The copy keystroke could not be sent; treated as "no selection".
     Failed(String),
+    /// Secure input turned on around the copy (a password field took focus):
+    /// nothing was sent, or what was copied is discarded.
+    SecureInput,
 }
 
 /// Why a command could not run. Serialized to the overlay, which maps each
@@ -98,6 +101,9 @@ enum CommandOutcome {
     Inserted,
     /// The result is on the clipboard (paste disabled, or pasting failed).
     Copied,
+    /// A terminal is focused and the result spans lines the selection did not
+    /// have: pasting could run commands, so it is only put on the clipboard.
+    CopiedTerminal,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -204,7 +210,7 @@ pub(crate) fn build_user_message(instruction: &str, selection: Option<&str>) -> 
 /// reasoning block, invisible characters, a fence around the whole answer, or
 /// quotes around the whole answer (unless the source itself was quoted).
 pub(crate) fn clean_llm_output(raw: &str, selection: Option<&str>) -> String {
-    let text = strip_invisible_chars(strip_think_block(raw));
+    let text = sanitize_untrusted_output(&strip_invisible_chars(strip_think_block(raw)));
     let mut text = text.trim();
 
     let source_fenced = selection.is_some_and(|s| s.trim_start().starts_with("```"));
@@ -238,6 +244,87 @@ pub(crate) fn clean_llm_output(raw: &str, selection: Option<&str>) -> String {
     text.to_string()
 }
 
+/// The model's answer is untrusted (the selection it rewrote may carry a
+/// prompt injection), and it ends up typed into whatever app is focused.
+/// Drops every control character but newline and tab (a lone carriage return
+/// acts as Enter in a terminal, escape sequences drive it), bidirectional
+/// overrides that make text read differently from what it is, and trailing
+/// line breaks.
+pub(crate) fn sanitize_untrusted_output(text: &str) -> String {
+    let cleaned: String = text
+        .replace("\r\n", "\n")
+        .chars()
+        .filter(|&c| match c {
+            '\n' | '\t' => true,
+            '\u{202A}'..='\u{202E}' | '\u{2066}'..='\u{2069}' => false,
+            c => !c.is_control(),
+        })
+        .collect();
+    let trimmed = cleaned.trim_end();
+    if cleaned[trimmed.len()..].contains('\n') {
+        trimmed.to_string()
+    } else {
+        cleaned
+    }
+}
+
+/// Terminals by macOS bundle identifier (compared case-insensitively).
+const TERMINAL_BUNDLE_IDS: &[&str] = &[
+    "com.apple.terminal",
+    "com.googlecode.iterm2",
+    "com.mitchellh.ghostty",
+    "net.kovidgoyal.kitty",
+    "org.alacritty",
+    "io.alacritty",
+    "com.github.wez.wezterm",
+    "co.zeit.hyper",
+    "org.tabby",
+];
+/// VS Code and its forks: an editor, but with an integrated terminal.
+const CODE_EDITOR_BUNDLE_IDS: &[&str] = &[
+    "com.microsoft.vscode",
+    "com.microsoft.vscodeinsiders",
+    "com.vscodium",
+    "com.todesktop.230313mzl4w4u92", // Cursor
+];
+
+pub(crate) fn is_terminal_bundle_id(bundle_id: &str) -> bool {
+    let id = bundle_id.to_ascii_lowercase();
+    // Warp ships as dev.warp.Warp-Stable, -Preview, -Beta…
+    id.starts_with("dev.warp.") || TERMINAL_BUNDLE_IDS.contains(&id.as_str())
+}
+
+pub(crate) fn is_code_editor_bundle_id(bundle_id: &str) -> bool {
+    CODE_EDITOR_BUNDLE_IDS.contains(&bundle_id.to_ascii_lowercase().as_str())
+}
+
+/// Whether the focused app is (likely) a terminal. In VS Code the integrated
+/// terminal shares the editor's bundle id; a copy made there lacks the
+/// editor's own clipboard metadata, which is the only hint available. With
+/// nothing selected there is no copy to tell them apart, so VS Code then
+/// counts as an editor (and no untrusted text reached the model either).
+pub(crate) fn is_terminal_target(
+    bundle_id: Option<&str>,
+    selection_copied_by_editor: Option<bool>,
+) -> bool {
+    match bundle_id {
+        Some(id) if is_terminal_bundle_id(id) => true,
+        Some(id) if is_code_editor_bundle_id(id) => selection_copied_by_editor == Some(false),
+        _ => false,
+    }
+}
+
+/// In a terminal, a pasted line break can run a command: refuse to paste a
+/// result that has more line breaks than the selection it replaces.
+pub(crate) fn must_copy_instead_of_paste(
+    result: &str,
+    selection: Option<&str>,
+    terminal: bool,
+) -> bool {
+    let newlines = |s: &str| s.matches('\n').count();
+    terminal && newlines(result) > selection.map_or(0, newlines)
+}
+
 /// Re-applies the selection's leading/trailing whitespace to the result, so
 /// replacing a triple-clicked line (which includes its newline) does not glue
 /// it to the next line.
@@ -269,7 +356,7 @@ pub(crate) fn is_vscode_empty_selection_copy(editor_data: &str) -> bool {
 pub(crate) fn selection_from_capture(outcome: CaptureOutcome) -> Option<String> {
     match outcome {
         CaptureOutcome::Text(text) if !text.trim().is_empty() => Some(text),
-        CaptureOutcome::Text(_) | CaptureOutcome::Empty => None,
+        CaptureOutcome::Text(_) | CaptureOutcome::Empty | CaptureOutcome::SecureInput => None,
         CaptureOutcome::Failed(err) => {
             warn!("Voice command: could not read the selection ({err}); writing new text");
             None
@@ -288,6 +375,14 @@ mod pasteboard {
 
     pub fn change_count() -> isize {
         NSPasteboard::generalPasteboard().changeCount()
+    }
+
+    /// Bundle identifier of the frontmost app, where a paste would land.
+    pub fn frontmost_bundle_id() -> Option<String> {
+        objc2_app_kit::NSWorkspace::sharedWorkspace()
+            .frontmostApplication()?
+            .bundleIdentifier()
+            .map(|id| id.to_string())
     }
 
     pub fn vscode_editor_data() -> Option<String> {
@@ -332,8 +427,18 @@ fn wait_for_modifier_release() {
 
 /// Simulates Cmd/Ctrl+C in the focused app and returns what it copied, then
 /// puts the user's clipboard back exactly as it was.
-fn capture_selection(app: &AppHandle) -> CaptureOutcome {
+///
+/// Secure input is checked again here, not only when the shortcut is pressed:
+/// focus may move to a password field in between, and a copy sent there must
+/// never happen (nor its result be used).
+///
+/// Also reports whether the copy carried VS Code's editor metadata (`None`
+/// when nothing was copied), see [`is_terminal_target`].
+fn capture_selection(app: &AppHandle) -> (CaptureOutcome, Option<bool>) {
     wait_for_modifier_release();
+    if crate::secure_input::is_enabled_now() {
+        return (CaptureOutcome::SecureInput, None);
+    }
     let clipboard = app.clipboard();
     let saved_text = clipboard.read_text().ok().filter(|t| !t.is_empty());
     let saved_image = if saved_text.is_none() {
@@ -353,10 +458,15 @@ fn capture_selection(app: &AppHandle) -> CaptureOutcome {
     let (tx, rx) = mpsc::channel();
     let app_for_copy = app.clone();
     let scheduled = app.run_on_main_thread(move || {
+        // Last check right before the keystroke leaves.
+        if crate::secure_input::is_enabled_now() {
+            let _ = tx.send(Ok(false));
+            return;
+        }
         let result = crate::clipboard::with_enigo(&app_for_copy, |enigo| {
             crate::input::send_copy_ctrl_c(enigo, 30)
         });
-        let _ = tx.send(result);
+        let _ = tx.send(result.map(|()| true));
     });
     let sent = match scheduled {
         Ok(()) => rx
@@ -365,9 +475,11 @@ fn capture_selection(app: &AppHandle) -> CaptureOutcome {
         Err(e) => Err(format!("could not reach the main thread: {e}")),
     };
 
+    let mut copied_by_editor = None;
     let outcome = match sent {
         Err(err) => CaptureOutcome::Failed(err),
-        Ok(()) => {
+        Ok(false) => CaptureOutcome::SecureInput,
+        Ok(true) => {
             let deadline = Instant::now() + COPY_TIMEOUT;
             let mut copied: Option<String> = None;
             while Instant::now() < deadline {
@@ -390,10 +502,13 @@ fn capture_selection(app: &AppHandle) -> CaptureOutcome {
                 None => CaptureOutcome::Empty,
                 Some(text) => {
                     #[cfg(target_os = "macos")]
-                    let line_copy = pasteboard::vscode_editor_data()
-                        .is_some_and(|data| is_vscode_empty_selection_copy(&data));
+                    let editor_data = pasteboard::vscode_editor_data();
                     #[cfg(not(target_os = "macos"))]
-                    let line_copy = false;
+                    let editor_data: Option<String> = None;
+                    copied_by_editor = Some(editor_data.is_some());
+                    let line_copy = editor_data
+                        .as_deref()
+                        .is_some_and(is_vscode_empty_selection_copy);
 
                     if line_copy {
                         debug!("Voice command: editor copied the current line, not a selection");
@@ -404,6 +519,14 @@ fn capture_selection(app: &AppHandle) -> CaptureOutcome {
                 }
             }
         }
+    };
+
+    // Secure input switched on while copying: whatever came back may come
+    // from a protected field, drop it.
+    let outcome = if crate::secure_input::is_enabled_now() {
+        CaptureOutcome::SecureInput
+    } else {
+        outcome
     };
 
     // Restore the user's clipboard whether or not anything was copied.
@@ -421,7 +544,7 @@ fn capture_selection(app: &AppHandle) -> CaptureOutcome {
         }
     }
 
-    outcome
+    (outcome, copied_by_editor)
 }
 
 // ---------------------------------------------------------------------------
@@ -570,7 +693,13 @@ fn show_done(app: &AppHandle, outcome: CommandOutcome, has_selection: bool) {
             outcome: Some(outcome),
         },
     );
-    hide_overlay_later(app, token, DONE_LINGER);
+    // The terminal case asks the user to act: leave time to read it.
+    let linger = if outcome == CommandOutcome::CopiedTerminal {
+        ERROR_LINGER
+    } else {
+        DONE_LINGER
+    };
+    hide_overlay_later(app, token, linger);
 }
 
 // ---------------------------------------------------------------------------
@@ -737,9 +866,14 @@ impl ShortcutAction for VoiceCommandAction {
                 return;
             }
 
-            let capture = capture
+            let (capture, copied_by_editor) = capture
                 .await
-                .unwrap_or_else(|e| CaptureOutcome::Failed(e.to_string()));
+                .unwrap_or_else(|e| (CaptureOutcome::Failed(e.to_string()), None));
+            if capture == CaptureOutcome::SecureInput {
+                set_tray_state(&ah, TrayIconState::Idle);
+                show_error(&ah, CommandError::SecureInput, false);
+                return;
+            }
             let selection = selection_from_capture(capture);
             let has_selection = selection.is_some();
 
@@ -809,7 +943,23 @@ impl ShortcutAction for VoiceCommandAction {
                     return;
                 }
                 let paste_method = get_settings(&ah_main).paste_method;
-                let outcome = if paste_method == PasteMethod::None {
+                #[cfg(target_os = "macos")]
+                let frontmost = pasteboard::frontmost_bundle_id();
+                #[cfg(not(target_os = "macos"))]
+                let frontmost: Option<String> = None;
+                let terminal = is_terminal_target(frontmost.as_deref(), copied_by_editor);
+                let outcome = if must_copy_instead_of_paste(&result, selection.as_deref(), terminal)
+                {
+                    warn!(
+                        "Voice command: multi-line result for a terminal ({}), copied instead of pasted",
+                        frontmost.as_deref().unwrap_or("unknown app")
+                    );
+                    ah_main
+                        .clipboard()
+                        .write_text(result)
+                        .map(|()| CommandOutcome::CopiedTerminal)
+                        .map_err(|e| e.to_string())
+                } else if paste_method == PasteMethod::None {
                     // Pasting is off: hand the result over on the clipboard.
                     ah_main
                         .clipboard()
@@ -983,6 +1133,92 @@ mod tests {
     }
 
     #[test]
+    fn untrusted_output_loses_control_chars_but_keeps_layout() {
+        // Escape sequences, bell, backspace, NUL and DEL are dropped.
+        assert_eq!(
+            sanitize_untrusted_output("ok\u{1b}[31mred\u{1b}[0m\u{7}\u{8}\u{0}\u{7f}"),
+            "ok[31mred[0m"
+        );
+        // C1 controls (e.g. CSI U+009B) too.
+        assert_eq!(sanitize_untrusted_output("a\u{9b}2Jb"), "a2Jb");
+        // A lone carriage return would act as Enter in a terminal.
+        assert_eq!(sanitize_untrusted_output("ls\rrm -rf ~"), "lsrm -rf ~");
+        // Newlines and tabs are content; CRLF becomes LF.
+        assert_eq!(sanitize_untrusted_output("a\n\tb\r\nc"), "a\n\tb\nc");
+        // Bidi overrides that disguise text are dropped.
+        assert_eq!(
+            sanitize_untrusted_output("abc\u{202E}fed\u{2066}x"),
+            "abcfedx"
+        );
+        // Accents, emoji and other scripts are untouched.
+        assert_eq!(sanitize_untrusted_output("Été 🎉 日本"), "Été 🎉 日本");
+    }
+
+    #[test]
+    fn untrusted_output_loses_trailing_line_breaks() {
+        assert_eq!(sanitize_untrusted_output("echo hi\n"), "echo hi");
+        assert_eq!(sanitize_untrusted_output("echo hi\r\n\n  \n"), "echo hi");
+        assert_eq!(sanitize_untrusted_output("echo hi\r"), "echo hi");
+        // Trailing spaces without a line break are left alone.
+        assert_eq!(sanitize_untrusted_output("a  "), "a  ");
+        // Leading and inner line breaks stay.
+        assert_eq!(sanitize_untrusted_output("\na\n\nb"), "\na\n\nb");
+        assert_eq!(sanitize_untrusted_output(""), "");
+    }
+
+    #[test]
+    fn output_cleanup_sanitizes_before_unwrapping() {
+        assert_eq!(
+            clean_llm_output("\u{1b}]0;x\u{7}Bonjour\r\n", None),
+            "]0;xBonjour"
+        );
+        assert_eq!(clean_llm_output("```\nls\r\n```\n", None), "ls");
+    }
+
+    #[test]
+    fn terminals_are_recognised_by_bundle_id() {
+        for id in [
+            "com.apple.Terminal",
+            "com.googlecode.iterm2",
+            "com.mitchellh.ghostty",
+            "dev.warp.Warp-Stable",
+            "dev.warp.Warp-Preview",
+            "net.kovidgoyal.kitty",
+            "org.alacritty",
+            "com.github.wez.wezterm",
+        ] {
+            assert!(is_terminal_target(Some(id), None), "{id}");
+        }
+        for id in ["com.apple.TextEdit", "com.apple.Safari", "md.obsidian"] {
+            assert!(!is_terminal_target(Some(id), Some(false)), "{id}");
+        }
+        assert!(!is_terminal_target(None, Some(false)));
+    }
+
+    #[test]
+    fn vscode_terminal_is_told_apart_by_the_copy() {
+        let code = Some("com.microsoft.VSCode");
+        // Copied from the integrated terminal: no editor metadata.
+        assert!(is_terminal_target(code, Some(false)));
+        // Copied from the editor.
+        assert!(!is_terminal_target(code, Some(true)));
+        // Nothing copied: cannot tell, treated as the editor.
+        assert!(!is_terminal_target(code, None));
+    }
+
+    #[test]
+    fn multi_line_results_are_not_pasted_into_terminals() {
+        // New line breaks in a terminal: copy only.
+        assert!(must_copy_instead_of_paste("ls\nrm -rf ~", Some("ls"), true));
+        assert!(must_copy_instead_of_paste("a\nb", None, true));
+        // Same number of lines as the selection: fine.
+        assert!(!must_copy_instead_of_paste("x\ny", Some("a\nb"), true));
+        assert!(!must_copy_instead_of_paste("git status", None, true));
+        // Outside terminals, multi-line text is pasted as usual.
+        assert!(!must_copy_instead_of_paste("a\nb\nc", Some("a"), false));
+    }
+
+    #[test]
     fn edge_whitespace_of_selection_is_kept() {
         assert_eq!(preserve_edge_whitespace("hello\n", "Bonjour"), "Bonjour\n");
         assert_eq!(preserve_edge_whitespace("  a b ", "x\n"), "  x ");
@@ -1016,6 +1252,7 @@ mod tests {
             selection_from_capture(CaptureOutcome::Failed("x".into())),
             None
         );
+        assert_eq!(selection_from_capture(CaptureOutcome::SecureInput), None);
     }
 
     #[test]

@@ -55,7 +55,7 @@ interface CommandDetail {
     | "llm_failed"
     | "paste_failed"
     | null;
-  outcome: "replaced" | "inserted" | "copied" | null;
+  outcome: "replaced" | "inserted" | "copied" | "copied_terminal" | null;
 }
 
 const isCommandState = (state: OverlayState): state is CommandState =>
@@ -516,7 +516,8 @@ const RecordingOverlay: React.FC = () => {
         true,
       );
     } else if (state === "command_done") {
-      width = "cworking";
+      // The terminal case is a longer instruction: give it the message width.
+      width = commandDetail.outcome === "copied_terminal" ? "cmsg" : "cworking";
       row = messageRow(
         "check",
         t(`overlay.command.done.${commandDetail.outcome ?? "inserted"}`),
