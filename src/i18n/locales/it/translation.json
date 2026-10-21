@@ -736,7 +736,8 @@
       "done": {
         "replaced": "Selection replaced",
         "inserted": "Text inserted",
-        "copied": "Copied to clipboard"
+        "copied": "Copied to clipboard",
+        "copied_terminal": "Result copied — paste with ⌘V"
       },
       "errors": {
         "no_llm": "Set up an AI model first",

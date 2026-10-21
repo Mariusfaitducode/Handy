@@ -736,7 +736,8 @@
       "done": {
         "replaced": "Sélection remplacée",
         "inserted": "Texte inséré",
-        "copied": "Copié dans le presse-papiers"
+        "copied": "Copié dans le presse-papiers",
+        "copied_terminal": "Résultat copié — collez avec ⌘V"
       },
       "errors": {
         "no_llm": "Configurez un modèle IA",
