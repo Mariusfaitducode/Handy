@@ -116,6 +116,8 @@ fn system_prompt(language: SummaryLanguage) -> &'static str {
              \n\
              Les interlocuteurs sont « Moi » (la personne qui a enregistré la réunion) et « Participants » (toutes les autres \
              personnes, regroupées : ne les distingue que si un prénom est clairement mentionné).\n\
+             Si la liste des invités est donnée, sers-t'en pour écrire correctement les noms ; un invité n'a pas \
+             forcément participé ni parlé.\n\
              \n\
              Écris en français, en Markdown, avec ces sections dans cet ordre :\n\
              \n\
@@ -142,6 +144,8 @@ fn system_prompt(language: SummaryLanguage) -> &'static str {
              \n\
              The speakers are \"Me\" (the person who recorded the meeting) and \"Participants\" (everyone else, grouped \
              together: only tell them apart when a first name is clearly mentioned).\n\
+             If the list of invitees is given, use it to spell names correctly; an invitee did not necessarily attend \
+             or speak.\n\
              \n\
              Write in English, in Markdown, with these sections in this order:\n\
              \n\
@@ -182,19 +186,24 @@ fn notes_prompt(language: SummaryLanguage, part: usize, parts: usize) -> String 
 /// What the model is given about the meeting besides its transcript.
 pub struct SummaryInput<'a> {
     pub title: Option<&'a str>,
+    /// Who was invited (from the calendar), to name people in the minutes.
+    pub participants: &'a [String],
     pub duration_ms: i64,
     pub segments: &'a [MeetingSegment],
     pub language: SummaryLanguage,
 }
 
 fn header(input: &SummaryInput<'_>) -> String {
-    let (title, duration) = match input.language {
-        SummaryLanguage::French => ("Titre", "Durée"),
-        SummaryLanguage::English => ("Title", "Duration"),
+    let (title, duration, invited) = match input.language {
+        SummaryLanguage::French => ("Titre", "Durée", "Invités (d'après le calendrier)"),
+        SummaryLanguage::English => ("Title", "Duration", "Invited (from the calendar)"),
     };
     let mut out = String::new();
     if let Some(t) = input.title.map(str::trim).filter(|t| !t.is_empty()) {
         out.push_str(&format!("{title} : {t}\n"));
+    }
+    if !input.participants.is_empty() {
+        out.push_str(&format!("{invited} : {}\n", input.participants.join(", ")));
     }
     out.push_str(&format!(
         "{duration} : {}\n",
@@ -433,10 +442,21 @@ mod tests {
     fn header_includes_title_and_duration() {
         let input = SummaryInput {
             title: Some("Point hebdo"),
+            participants: &[],
             duration_ms: 30 * 60_000,
             segments: &[],
             language: SummaryLanguage::French,
         };
         assert_eq!(header(&input), "Titre : Point hebdo\nDurée : 30 min\n");
+        let invited = ["Yasmine".to_string(), "Alice Martin".to_string()];
+        let input = SummaryInput {
+            participants: &invited,
+            language: SummaryLanguage::English,
+            ..input
+        };
+        assert_eq!(
+            header(&input),
+            "Title : Point hebdo\nInvited (from the calendar) : Yasmine, Alice Martin\nDuration : 30 min\n"
+        );
     }
 }
