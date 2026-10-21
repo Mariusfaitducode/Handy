@@ -15,6 +15,7 @@
     "advanced": "מתקדם",
     "postProcessing": "עיבוד משלים",
     "history": "היסטוריה",
+    "dictionary": "Dictionary",
     "debug": "ניפוי שגיאות",
     "about": "אודות"
   },
@@ -458,7 +459,101 @@
       "retranscribe": "תמלל מחדש",
       "retranscribeError": "תמלול מחדש נכשל. נסה שוב.",
       "transcribing": "מתמלל...",
-      "transcriptionFailed": "התמלול נכשל. אפשר לתמלל מחדש באמצעות אייקון הניסיון החוזר."
+      "transcriptionFailed": "התמלול נכשל. אפשר לתמלל מחדש באמצעות אייקון הניסיון החוזר.",
+      "edit": "Correct transcription",
+      "editSave": "Save",
+      "editCancel": "Cancel",
+      "editHint": "{{shortcut}} to save · Esc to cancel",
+      "editError": "Couldn't save your correction.",
+      "learn": {
+        "title": "Teach Handy this correction?",
+        "add": "Add",
+        "added": "Added",
+        "dismiss": "Not now"
+      }
+    },
+    "dictionary": {
+      "title": "Dictionary",
+      "description": "Names and terms Handy should know, and fixes for what it mishears.",
+      "add": {
+        "heardPlaceholder": "Word or name",
+        "heardPlaceholderReplacement": "Heard, e.g. Andy",
+        "writtenPlaceholder": "Write instead (optional)",
+        "button": "Add",
+        "becomes": "becomes",
+        "hint": "Leave the second field empty to teach a word. Fill it in to fix a mishearing, e.g. “Andy” → “Handy”.",
+        "added": "“{{term}}” added to your dictionary"
+      },
+      "errors": {
+        "empty": "Type a word first.",
+        "too_long": "Keep it under 50 characters.",
+        "duplicate": "“{{term}}” is already in your dictionary.",
+        "generic": "Couldn't update the dictionary. Please try again."
+      },
+      "filterPlaceholder": "Search {{count}} entries",
+      "noMatch": "No entry matches “{{query}}”.",
+      "empty": {
+        "title": "Your dictionary is empty",
+        "body": "Add the names, brands and jargon you use. Tip: correct a dictation in History and Handy will offer to learn from it."
+      },
+      "entry": {
+        "remove": "Remove {{term}}",
+        "addedBy": "Added by {{name}} on {{date}}",
+        "addedOn": "Added on {{date}}",
+        "removed": "“{{term}}” removed",
+        "undo": "Undo"
+      },
+      "suggestions": {
+        "title": "Suggestions",
+        "description": "Names that keep coming up in your dictations.",
+        "seen_one": "seen {{count}} time",
+        "seen_other": "seen {{count}} times",
+        "add": "Add",
+        "dismiss": "Ignore",
+        "dismissLabel": "Ignore {{term}}"
+      },
+      "sharing": {
+        "title": "Sharing",
+        "description": "Share your dictionary with someone close through a shared folder or a file.",
+        "author": {
+          "title": "Your name",
+          "description": "Shown next to the words you add, for the people you share with.",
+          "placeholder": "First name"
+        },
+        "folder": {
+          "title": "Shared folder",
+          "description": "Choose the same folder on each Mac, such as a shared iCloud Drive or Dropbox folder. Handy syncs every minute and merges both sides, so no word is lost.",
+          "choose": "Choose folder…",
+          "dialogTitle": "Choose the folder to share your dictionary through",
+          "stop": "Stop",
+          "syncNow": "Sync now",
+          "syncing": "Syncing…",
+          "never": "Not synced yet",
+          "lastSync": "Synced {{time}}",
+          "stopped": "Sync stopped. Your words stay on this Mac."
+        },
+        "syncErrors": {
+          "folder_missing": "Folder not found. Is the drive connected?",
+          "not_downloaded": "iCloud hasn't downloaded the shared file to this Mac yet. Open the folder in Finder to fetch it.",
+          "unreadable": "The shared file can't be read, so it was left untouched.",
+          "write_failed": "Couldn't write to the shared folder. Check that it is writable."
+        },
+        "file": {
+          "title": "File",
+          "description": "Send your dictionary by AirDrop or email. Importing only adds words, it never removes any.",
+          "export": "Export…",
+          "import": "Import…",
+          "filterName": "Handy dictionary",
+          "exported_one": "{{count}} entry exported",
+          "exported_other": "{{count}} entries exported",
+          "imported": "Imported: {{added}} added, {{updated}} updated",
+          "importedNothing": "Nothing new in this file.",
+          "exportError": "Couldn't export the dictionary.",
+          "exportNotDictionary": "That file already exists and isn't a Handy dictionary, so it wasn't replaced.",
+          "exportNotJson": "The dictionary must be saved as a .json file.",
+          "importError": "This file isn't a Handy dictionary."
+        }
+      }
     },
     "debug": {
       "title": "ניפוי שגיאות",
