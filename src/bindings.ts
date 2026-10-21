@@ -1072,6 +1072,99 @@ async revealMeetingExport(path: string) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async getCalendarOverview() : Promise<Result<CalendarOverview, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_calendar_overview") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Turns the feature on: asks for calendar access (and then for
+ * notifications) if needed, and switches to "Ask" when access is granted.
+ */
+async enableCalendar() : Promise<Result<CalendarOverview, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("enable_calendar") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Asks for notification access again (after the feature was set up with
+ * it undetermined).
+ */
+async requestCalendarNotifications() : Promise<Result<CalendarOverview, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("request_calendar_notifications") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async listCalendars() : Promise<Result<CalendarInfo[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_calendars") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateCalendarSettings(settings: CalendarSettings) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_calendar_settings", { settings }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Record (`true`), don't record (`false`) or follow the rules (`None`) for
+ * one occurrence.
+ */
+async setCalendarEventChoice(key: string, record: boolean | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_calendar_event_choice", { key, record }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The answer to a prompt shown in the window (when notifications are off).
+ */
+async answerCalendarPrompt(key: string, answer: CalendarAnswer) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("answer_calendar_prompt", { key, answer }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Opens the System Settings pane where access is granted.
+ */
+async openCalendarSystemSettings(pane: CalendarSettingsPane) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_calendar_system_settings", { pane }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Opens an event's call link in the browser (or the Zoom/Teams app).
+ */
+async openMeetingLink(url: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_meeting_link", { url }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -1079,6 +1172,8 @@ async revealMeetingExport(path: string) : Promise<Result<null, string>> {
 
 
 export const events = __makeEvents__<{
+calendarChangedEvent: CalendarChangedEvent,
+calendarPromptEvent: CalendarPromptEvent,
 historyUpdatePayload: HistoryUpdatePayload,
 meetingErrorEvent: MeetingErrorEvent,
 meetingSegmentEvent: MeetingSegmentEvent,
@@ -1088,6 +1183,8 @@ meetingUpdatedEvent: MeetingUpdatedEvent,
 streamPhaseEvent: StreamPhaseEvent,
 streamTextEvent: StreamTextEvent
 }>({
+calendarChangedEvent: "calendar-changed-event",
+calendarPromptEvent: "calendar-prompt-event",
 historyUpdatePayload: "history-update-payload",
 meetingErrorEvent: "meeting-error-event",
 meetingSegmentEvent: "meeting-segment-event",
@@ -1181,7 +1278,11 @@ overlay_style?: OverlayStyle;
 /**
  * Meeting mode preferences (summary, export, retention, indicator).
  */
-meeting?: MeetingSettings }
+meeting?: MeetingSettings; 
+/**
+ * Calendar auto-start (mode, followed calendars, per-event choices).
+ */
+calendar?: CalendarSettings }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { transcribe: string[]; gpu_devices: GpuDeviceOption[] }
@@ -1190,6 +1291,105 @@ export type BindingResponse = { success: boolean; binding: ShortcutBinding | nul
  * Script applied to Mandarin and Cantonese output. Other languages are never
  * converted.
  */
+/**
+ * Whether Handy may read the calendar.
+ */
+export type CalendarAccess = 
+/**
+ * Not asked yet.
+ */
+"not_determined" | "granted" | 
+/**
+ * Refused, or restricted by the administrator, or "add events only".
+ */
+"denied" | 
+/**
+ * Not macOS.
+ */
+"unsupported"
+/**
+ * What the user answered to a prompt.
+ */
+export type CalendarAnswer = "record" | "ignore" | "stop" | "keep"
+/**
+ * The upcoming list or the access changed: refetch the overview.
+ */
+export type CalendarChangedEvent = null
+/**
+ * A calendar the user can follow or not.
+ */
+export type CalendarInfo = { id: string; title: string; 
+/**
+ * The account it belongs to ("iCloud", "Google", an address…).
+ */
+source: string; color: string | null; followed: boolean }
+/**
+ * When calendar events turn into meetings.
+ */
+export type CalendarMode = 
+/**
+ * Not set up, or turned off: the calendar isn't read at all.
+ */
+"off" | 
+/**
+ * A notification a minute before asks whether to record.
+ */
+"ask" | 
+/**
+ * Recording starts on its own; the notification a minute before lets
+ * the user opt out.
+ */
+"auto"
+/**
+ * Everything the "Upcoming meetings" section shows.
+ */
+export type CalendarOverview = { access: CalendarAccess; notifications: NotificationAccess; mode: CalendarMode; upcoming: UpcomingMeeting[] }
+/**
+ * A prompt that couldn't be shown as a notification, shown in the window
+ * instead.
+ */
+export type CalendarPromptEvent = { kind: CalendarPromptKind; key: string; title: string }
+export type CalendarPromptKind = 
+/**
+ * "X starts in 1 min — Record / Ignore".
+ */
+"soon" | 
+/**
+ * "X starts in 1 min, recording automatically — Don't record".
+ */
+"auto_soon" | 
+/**
+ * "X seems to be over — Stop / Keep recording".
+ */
+"ended"
+/**
+ * Calendar preferences, stored as one object in the app settings.
+ */
+export type CalendarSettings = { mode: CalendarMode; 
+/**
+ * Calendars the user unticked. New calendars are followed by default.
+ */
+excluded_calendars: string[]; 
+/**
+ * Only events with a Meet/Zoom/Teams… link are offered.
+ */
+only_video_calls: boolean; 
+/**
+ * Events with nobody else invited (focus blocks with a link…) are not
+ * offered.
+ */
+skip_without_attendees: boolean; 
+/**
+ * Occurrences (see [`detect::RawEvent::key`]) the user chose not to
+ * record.
+ */
+skipped_events: string[]; 
+/**
+ * Occurrences the user chose to record although the rules above would
+ * skip them.
+ */
+included_events: string[] }
+export type CalendarSettingsPane = "calendars" | "notifications"
 export type ChineseScript = 
 /**
  * Keep whatever script the model produced.
@@ -1258,7 +1458,12 @@ duration_ms: number; status: MeetingRecordStatus; system_audio: SystemAudioState
 /**
  * "Provider · model" that wrote the summary.
  */
-summary_model: string | null; segment_count: number }
+summary_model: string | null; segment_count: number; 
+/**
+ * People invited to the calendar event it was started from (the user
+ * excluded). Empty for meetings started by hand.
+ */
+participants: string[] }
 /**
  * Where a meeting is in its life.
  */
@@ -1370,6 +1575,15 @@ sha256: string | null } } |
  */
 "Local"
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
+/**
+ * Whether Handy's notifications can be shown.
+ */
+export type NotificationAccess = "not_determined" | "granted" | "denied" | 
+/**
+ * Not available in this build (not running from an app bundle, or not
+ * macOS). Prompts then appear in the Handy window only.
+ */
+"unavailable"
 export type OverlayPosition = "top" | "bottom"
 /**
  * Which recording overlay to display. `Minimal` and `Live` share one base
@@ -1541,7 +1755,53 @@ export type SystemAudioState =
 export type Theme = "system" | "light" | "dark"
 export type TranscribeAcceleratorSetting = "auto" | "cpu" | "gpu"
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
+/**
+ * Where an upcoming event stands.
+ */
+export type UpcomingDecision = 
+/**
+ * Will be offered (Ask) or recorded (Auto).
+ */
+"record" | 
+/**
+ * The user said not to record this one.
+ */
+"skipped" | 
+/**
+ * Nobody else is invited, so it isn't offered; the user can still ask
+ * for it.
+ */
+"no_attendees"
+/**
+ * An event in "Upcoming meetings".
+ */
+export type UpcomingMeeting = { 
+/**
+ * Identifies this occurrence.
+ */
+key: string; title: string; 
+/**
+ * Unix milliseconds.
+ */
+start_ms: number; end_ms: number; calendar_title: string; calendar_color: string | null; video: VideoLink | null; 
+/**
+ * Other people invited, as the minutes will name them.
+ */
+participants: string[]; decision: UpcomingDecision; 
+/**
+ * Being recorded right now (started from the calendar).
+ */
+recording: boolean }
 export type VadBackend = "silero" | "earshot"
+/**
+ * A call link found in an event.
+ */
+export type VideoLink = { 
+/**
+ * "meet", "zoom", "teams", "webex", "facetime", "whereby", "jitsi",
+ * "around", "slack", "other". The UI names it.
+ */
+provider: string; url: string }
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
 
 /** tauri-specta globals **/

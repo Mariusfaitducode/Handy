@@ -4,6 +4,7 @@ mod apple_intelligence;
 mod audio_feedback;
 pub mod audio_toolkit;
 mod autostart;
+mod calendar;
 mod catalog;
 mod chinese_script;
 pub mod cli;
@@ -97,7 +98,7 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
-fn show_main_window(app: &AppHandle) {
+pub(crate) fn show_main_window(app: &AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
             log::error!("Failed to unminimize webview window: {}", e);
@@ -220,6 +221,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
         }
         Err(e) => log::error!("Failed to initialize meeting manager: {e}"),
     }
+    calendar::init(app_handle);
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -808,6 +810,15 @@ pub fn run(cli_args: CliArgs) {
             meeting::commands::get_meeting_text,
             meeting::commands::export_meeting_markdown,
             meeting::commands::reveal_meeting_export,
+            calendar::commands::get_calendar_overview,
+            calendar::commands::enable_calendar,
+            calendar::commands::request_calendar_notifications,
+            calendar::commands::list_calendars,
+            calendar::commands::update_calendar_settings,
+            calendar::commands::set_calendar_event_choice,
+            calendar::commands::answer_calendar_prompt,
+            calendar::commands::open_calendar_system_settings,
+            calendar::commands::open_meeting_link,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,
@@ -818,6 +829,8 @@ pub fn run(cli_args: CliArgs) {
             meeting::MeetingSegmentRemovedEvent,
             meeting::MeetingUpdatedEvent,
             meeting::MeetingErrorEvent,
+            calendar::CalendarChangedEvent,
+            calendar::CalendarPromptEvent,
         ]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds

@@ -17,3 +17,6 @@ export const useMeetingNavigation = create<MeetingNavigationStore>((set) => ({
 
 /** Event the indicator window emits to show a meeting in the main window. */
 export const OPEN_MEETING_EVENT = "meeting-open";
+
+/** Event the backend emits when a calendar notification is clicked. */
+export const CALENDAR_OPEN_EVENT = "calendar-open";
