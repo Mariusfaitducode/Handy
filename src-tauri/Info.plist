@@ -7,10 +7,12 @@
   <key>NSAudioCaptureUsageDescription</key>
   <string>In meeting mode, Handy records the sound of your calls so it can transcribe what the other participants say. Audio is transcribed on this Mac and never saved.</string>
   <key>NSDocumentsFolderUsageDescription</key>
-  <string>Handy reads and updates the shared dictionary file in the folder you chose, so your words stay in sync with the people you share them with.</string>
+  <string>Handy saves your voice notes as Markdown files in Documents › Handy Notes, and keeps the shared dictionary file in sync if you chose a folder there.</string>
   <key>NSDesktopFolderUsageDescription</key>
   <string>Handy reads and updates the shared dictionary file in the folder you chose, so your words stay in sync with the people you share them with.</string>
   <key>NSFileProviderDomainUsageDescription</key>
   <string>Handy reads and updates the shared dictionary file in the iCloud Drive, Dropbox or other cloud folder you chose, so your words stay in sync.</string>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Handy adds your voice notes to Apple Notes, only if you turn this on in the Notes settings.</string>
 </dict>
 </plist>

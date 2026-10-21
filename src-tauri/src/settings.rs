@@ -567,6 +567,9 @@ pub struct AppSettings {
     /// shortcut is only registered for people who opt in.
     #[serde(default)]
     pub voice_commands_enabled: bool,
+    /// Voice notes (dedicated shortcut that saves instead of pasting).
+    #[serde(default)]
+    pub voice_notes: crate::notes::VoiceNotesSettings,
 }
 
 fn default_model() -> String {
@@ -1019,6 +1022,25 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_voice_command_shortcut.to_string(),
         },
     );
+
+    // Avoids the dictation shortcuts and the macOS input-source switchers
+    // (Ctrl+Space, Ctrl+Option+Space).
+    #[cfg(target_os = "macos")]
+    let default_voice_note_shortcut = "ctrl+shift+space";
+    #[cfg(not(target_os = "macos"))]
+    // Not ctrl+alt+space: that is the voice-command default off macOS.
+    let default_voice_note_shortcut = "ctrl+alt+n";
+    bindings.insert(
+        crate::notes::VOICE_NOTE_BINDING.to_string(),
+        ShortcutBinding {
+            id: crate::notes::VOICE_NOTE_BINDING.to_string(),
+            name: "Voice Note".to_string(),
+            description: "Records a thought and saves it as a note instead of pasting it."
+                .to_string(),
+            default_binding: default_voice_note_shortcut.to_string(),
+            current_binding: default_voice_note_shortcut.to_string(),
+        },
+    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
@@ -1101,6 +1123,7 @@ pub fn get_default_settings() -> AppSettings {
         overlay_style: default_overlay_style(),
         meeting: crate::meeting::MeetingSettings::default(),
         voice_commands_enabled: false,
+        voice_notes: crate::notes::VoiceNotesSettings::default(),
     }
 }
 

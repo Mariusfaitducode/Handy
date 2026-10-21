@@ -25,6 +25,8 @@ use tauri::Manager;
 use tauri::{AppHandle, Emitter};
 
 const CANCELLATION_POLL_INTERVAL: Duration = Duration::from_millis(25);
+/// How long the overlay shows "Note saved" before fading out.
+const VOICE_NOTE_CONFIRMATION: Duration = Duration::from_millis(1400);
 
 #[derive(Clone, serde::Serialize)]
 struct RecordingErrorEvent {
@@ -57,6 +59,8 @@ pub trait ShortcutAction: Send + Sync {
 // Transcribe Action
 struct TranscribeAction {
     post_process: bool,
+    /// Save the transcript as a voice note instead of pasting it.
+    voice_note: bool,
 }
 
 /// Field name for structured output JSON schema
@@ -480,7 +484,13 @@ impl ShortcutAction for TranscribeAction {
         // pill instead of an oversized transparent live window.
         let overlay_started = Instant::now();
         match settings.overlay_style {
+            OverlayStyle::Live if model_supports_streaming && self.voice_note => {
+                utils::show_note_streaming_overlay(app)
+            }
             OverlayStyle::Live if model_supports_streaming => utils::show_streaming_overlay(app),
+            OverlayStyle::Live | OverlayStyle::Minimal if self.voice_note => {
+                utils::show_note_recording_overlay(app)
+            }
             OverlayStyle::Live | OverlayStyle::Minimal => show_recording_overlay(app),
             OverlayStyle::None => {} // show_overlay_state no-ops on None anyway
         }
@@ -619,6 +629,7 @@ impl ShortcutAction for TranscribeAction {
 
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
         let post_process = self.post_process;
+        let voice_note = self.voice_note;
         let cancel_generation = rm.cancel_generation();
 
         tauri::async_runtime::spawn(async move {
@@ -707,6 +718,61 @@ impl ShortcutAction for TranscribeAction {
                                 transcription_time.elapsed(),
                                 utils::redact_text(&transcription)
                             );
+
+                            if voice_note {
+                                if wav_saved {
+                                    if let Err(err) = hm.save_entry(
+                                        file_name,
+                                        transcription.clone(),
+                                        false,
+                                        None,
+                                        None,
+                                    ) {
+                                        error!("Failed to save history entry: {}", err);
+                                    }
+                                }
+                                if crate::notes::will_use_llm(&ah) {
+                                    if use_streaming_overlay {
+                                        tm.emit_stream_working(StreamWorkKind::Polishing);
+                                    } else {
+                                        show_processing_overlay(&ah);
+                                    }
+                                }
+                                let prepared = complete_unless_cancelled(
+                                    crate::notes::prepare_draft(&ah, &transcription),
+                                    || rm.was_cancelled_since(cancel_generation),
+                                )
+                                .await;
+                                let Some((draft, ai_processed)) =
+                                    prepared.filter(|_| !rm.was_cancelled_since(cancel_generation))
+                                else {
+                                    debug!("Voice note cancelled before saving");
+                                    utils::hide_recording_overlay(&ah);
+                                    set_tray_state(&ah, TrayIconState::Idle);
+                                    return;
+                                };
+                                match crate::notes::save(&ah, &transcription, draft, ai_processed) {
+                                    crate::notes::CaptureOutcome::Saved => {
+                                        utils::flash_overlay_state(
+                                            &ah,
+                                            "note_saved",
+                                            VOICE_NOTE_CONFIRMATION,
+                                        );
+                                    }
+                                    crate::notes::CaptureOutcome::Empty => {
+                                        utils::hide_recording_overlay(&ah);
+                                    }
+                                    crate::notes::CaptureOutcome::Failed => {
+                                        utils::flash_overlay_state(
+                                            &ah,
+                                            "note_failed",
+                                            VOICE_NOTE_CONFIRMATION,
+                                        );
+                                    }
+                                }
+                                set_tray_state(&ah, TrayIconState::Idle);
+                                return;
+                            }
 
                             // Style by app: look at the app the text is about to be
                             // pasted into. Only for post-processed dictations, so
@@ -908,11 +974,22 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         "transcribe".to_string(),
         Arc::new(TranscribeAction {
             post_process: false,
+            voice_note: false,
         }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "transcribe_with_post_process".to_string(),
-        Arc::new(TranscribeAction { post_process: true }) as Arc<dyn ShortcutAction>,
+        Arc::new(TranscribeAction {
+            post_process: true,
+            voice_note: false,
+        }) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        crate::notes::VOICE_NOTE_BINDING.to_string(),
+        Arc::new(TranscribeAction {
+            post_process: false,
+            voice_note: true,
+        }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         crate::settings::VOICE_COMMAND_BINDING_ID.to_string(),

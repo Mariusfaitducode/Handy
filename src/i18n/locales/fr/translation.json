@@ -23,7 +23,8 @@
     "about": "À propos",
     "meetings": "Réunions",
     "voiceCommands": "Commandes",
-    "dictionary": "Dictionnaire"
+    "dictionary": "Dictionnaire",
+    "notes": "Notes"
   },
   "onboarding": {
     "subtitle": "Pour commencer, choisissez un modèle de transcription",
@@ -186,6 +187,10 @@
           "voice_command": {
             "name": "Raccourci des commandes",
             "description": "Maintenez ce raccourci et dites une instruction à appliquer au texte sélectionné."
+          },
+          "voice_note": {
+            "name": "Raccourci note vocale",
+            "description": "Enregistre une pensée et la range dans vos notes au lieu de la taper."
           }
         },
         "errors": {
@@ -866,7 +871,9 @@
         "llm_failed": "Le modèle IA n’a pas répondu",
         "paste_failed": "Collage impossible — copié"
       }
-    }
+    },
+    "noteSaved": "Note enregistrée",
+    "noteFailed": "Note non enregistrée"
   },
   "whatsNew": {
     "title": "Nouveautés de Handy v{{version}}"
@@ -1025,6 +1032,137 @@
       "pause": "Pause",
       "resume": "Reprendre",
       "stop": "Arrêter et rédiger le compte rendu"
+    }
+  },
+  "notes": {
+    "title": "Notes",
+    "searchPlaceholder": "Rechercher dans les notes",
+    "clearSearch": "Effacer la recherche",
+    "settingsButton": "Réglages des notes",
+    "back": "Retour aux notes",
+    "loading": "Chargement des notes…",
+    "loadError": "Impossible de charger vos notes.",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "count_one": "{{count}} note",
+    "count_other": "{{count}} notes",
+    "noResults": "Aucune note ne correspond à « {{query}} ».",
+    "empty": {
+      "title": "Aucune note pour l'instant",
+      "description": "Appuyez sur {{shortcut}}, dites ce qui vous passe par la tête : la note arrive ici. Rien n'est tapé dans l'app que vous utilisez."
+    },
+    "disabled": {
+      "title": "Les notes vocales sont désactivées",
+      "description": "Activez-les pour noter une idée avec un raccourci dédié, sans rien taper nulle part.",
+      "enable": "Activer"
+    },
+    "row": {
+      "expand": "Afficher la note complète",
+      "collapse": "Réduire",
+      "aiProcessed": "Titre et nettoyage par l'IA",
+      "showOriginal": "Voir ce que vous avez dit",
+      "hideOriginal": "Masquer ce que vous avez dit",
+      "exportProblem": "Une destination n'a pas pu être mise à jour"
+    },
+    "actions": {
+      "copy": "Copier",
+      "open": "Ouvrir",
+      "delete": "Supprimer",
+      "retry": "Réessayer"
+    },
+    "toasts": {
+      "deleted": "Note supprimée",
+      "undo": "Annuler",
+      "deleteLeftUntouched": "Note supprimée de Handy. Son fichier journal a été modifié à la main : il a été laissé tel quel.",
+      "deleteError": "Impossible de supprimer la note.",
+      "openError": "Impossible d'ouvrir la note.",
+      "copyError": "Impossible de copier la note.",
+      "retryError": "Impossible de réessayer.",
+      "saveError": "Impossible d'enregistrer le réglage."
+    },
+    "destinations": {
+      "markdown": "Markdown",
+      "notion": "Notion",
+      "apple_notes": "Apple Notes",
+      "pending": "{{name}} : envoi…",
+      "done": "{{name}} : ouvrir",
+      "failed": "{{name}} : échec"
+    },
+    "errors": {
+      "permission_denied": "Handy ne peut pas écrire dans ce dossier. Autorisez l'accès dans Réglages Système › Confidentialité et sécurité › Fichiers et dossiers.",
+      "io": "La note n'a pas pu être écrite dans le dossier.",
+      "notion_invalid_token": "Notion a refusé le jeton. Vérifiez-le dans les réglages de votre intégration.",
+      "notion_page_not_found": "Notion ne voit pas cette page. Ouvrez-la dans Notion, puis ••• › Connexions › ajoutez votre intégration.",
+      "notion_invalid_page_link": "Ce lien ne ressemble pas à une page Notion.",
+      "notion_network": "Impossible de joindre Notion. Vérifiez votre connexion.",
+      "notion_api": "Notion a renvoyé une erreur.",
+      "notion_token_missing": "Notion n'est plus connecté. Reconnectez-le dans les réglages des notes.",
+      "notion_keychain": "Impossible d'enregistrer le jeton dans le trousseau.",
+      "apple_notes_denied": "Handy n'est pas autorisé à contrôler Notes. Autorisez-le dans Réglages Système › Confidentialité et sécurité › Automatisation.",
+      "apple_notes_failed": "Apple Notes a renvoyé une erreur.",
+      "generic": "Une erreur est survenue."
+    },
+    "settings": {
+      "title": "Réglages des notes",
+      "capture": {
+        "title": "Capture",
+        "enabled": {
+          "label": "Notes vocales",
+          "description": "Un raccourci dédié qui range ce que vous dites dans vos notes au lieu de le taper."
+        },
+        "ai": {
+          "label": "Titre et nettoyage par l'IA",
+          "description": "Donne un titre à chaque note et retire les hésitations, avec votre fournisseur de post-traitement. Vos mots et votre langue sont conservés.",
+          "using": "Utilise {{provider}}.",
+          "unavailableDisabled": "Activez le post-traitement (Avancé › Expérimental) et choisissez un fournisseur pour l'utiliser. En attendant, le titre reprend vos premiers mots.",
+          "unavailableNoProvider": "Choisissez un fournisseur, un modèle et une clé API dans Post-traitement pour l'utiliser. En attendant, le titre reprend vos premiers mots."
+        }
+      },
+      "markdown": {
+        "title": "Dossier Markdown",
+        "enabled": {
+          "label": "Enregistrer dans un dossier",
+          "description": "Des fichiers Markdown à ouvrir dans Obsidian, iA Writer ou n'importe quel éditeur."
+        },
+        "folder": {
+          "label": "Dossier",
+          "description": "Où les notes sont écrites. Par défaut : Documents › Handy Notes.",
+          "choose": "Choisir…",
+          "reset": "Par défaut",
+          "open": "Ouvrir"
+        },
+        "layout": {
+          "label": "Fichiers",
+          "description": "Un fichier journal par jour avec une section par note, ou un fichier par note.",
+          "daily": "Un par jour",
+          "per_note": "Un par note"
+        }
+      },
+      "notion": {
+        "title": "Notion",
+        "description": "Chaque note devient une page, rangée sous la page de votre choix.",
+        "token": {
+          "label": "Jeton d'intégration",
+          "placeholder": "ntn_…",
+          "help": "Créez une intégration interne sur notion.so/profile/integrations, copiez son jeton, puis ajoutez l'intégration à la page parente (••• › Connexions)."
+        },
+        "page": {
+          "label": "Page parente",
+          "placeholder": "Collez le lien de la page"
+        },
+        "connect": "Connecter",
+        "connecting": "Vérification…",
+        "connected": "Les notes vont dans « {{page}} ».",
+        "connectedUntitled": "Connecté.",
+        "disconnect": "Déconnecter",
+        "keychain": "Le jeton est gardé dans votre trousseau, jamais dans le fichier de réglages de Handy."
+      },
+      "appleNotes": {
+        "title": "Apple Notes",
+        "label": "Ajouter à Apple Notes",
+        "description": "Chaque note est aussi ajoutée dans un dossier « Handy » de Notes. macOS demande l'autorisation la première fois.",
+        "openSettings": "Ouvrir les Réglages Système"
+      }
     }
   }
 }

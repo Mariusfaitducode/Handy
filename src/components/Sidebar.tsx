@@ -6,6 +6,7 @@ import {
   FlaskConical,
   History,
   Info,
+  NotebookPen,
   Sparkles,
   Cpu,
   Users,
@@ -25,6 +26,7 @@ import {
   ModelsSettings,
   MeetingsSettings,
   VoiceCommandsSettings,
+  NotesSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -67,6 +69,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.dictionary",
     icon: BookA,
     component: DictionarySettings,
+    enabled: () => true,
+  },
+  notes: {
+    labelKey: "sidebar.notes",
+    icon: NotebookPen,
+    component: NotesSettings,
     enabled: () => true,
   },
   models: {

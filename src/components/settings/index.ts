@@ -10,6 +10,7 @@ export { PostProcessingSettings } from "./post-processing/PostProcessingSettings
 export { ModelsSettings } from "./models/ModelsSettings";
 export { MeetingsSettings } from "./meetings/MeetingsSettings";
 export { VoiceCommandsSettings } from "./voice-commands/VoiceCommandsSettings";
+export { NotesSettings } from "./notes/NotesSettings";
 
 // Individual setting components
 export { MicrophoneSelector } from "./MicrophoneSelector";
