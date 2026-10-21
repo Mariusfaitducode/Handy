@@ -67,16 +67,22 @@ export const SECTIONS_CONFIG = {
     component: MeetingsSettings,
     enabled: () => true,
   },
-  dictionary: {
-    labelKey: "sidebar.dictionary",
-    icon: BookA,
-    component: DictionarySettings,
-    enabled: () => true,
-  },
   notes: {
     labelKey: "sidebar.notes",
     icon: NotebookPen,
     component: NotesSettings,
+    enabled: () => true,
+  },
+  voicecommands: {
+    labelKey: "sidebar.voiceCommands",
+    icon: WandSparkles,
+    component: VoiceCommandsSettings,
+    enabled: () => true,
+  },
+  dictionary: {
+    labelKey: "sidebar.dictionary",
+    icon: BookA,
+    component: DictionarySettings,
     enabled: () => true,
   },
   stats: {
@@ -95,12 +101,6 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.advanced",
     icon: Cog,
     component: AdvancedSettings,
-    enabled: () => true,
-  },
-  voicecommands: {
-    labelKey: "sidebar.voiceCommands",
-    icon: WandSparkles,
-    component: VoiceCommandsSettings,
     enabled: () => true,
   },
   postprocessing: {

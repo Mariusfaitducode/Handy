@@ -757,6 +757,21 @@ impl ShortcutAction for TranscribeAction {
                                 };
                                 match crate::notes::save(&ah, &transcription, draft, ai_processed) {
                                     crate::notes::CaptureOutcome::Saved => {
+                                        // A saved note is dictated words too: count
+                                        // them in Statistics, with no target app
+                                        // since nothing was pasted anywhere.
+                                        let settings = get_settings(&ah);
+                                        let duration_ms = (sample_count as u64 * 1000
+                                            / crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE
+                                                as u64)
+                                            as i64;
+                                        sm.record_dictation(
+                                            &transcription,
+                                            Some(duration_ms),
+                                            None,
+                                            &settings.selected_language,
+                                            settings.translate_to_english,
+                                        );
                                         utils::flash_overlay_state(
                                             &ah,
                                             "note_saved",

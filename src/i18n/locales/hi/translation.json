@@ -23,7 +23,9 @@
     "debug": "डिबग",
     "about": "के बारे में",
     "meetings": "Meetings",
-    "voiceCommands": "Commands"
+    "voiceCommands": "Commands",
+    "dictionary": "Dictionary",
+    "notes": "Notes"
   },
   "onboarding": {
     "subtitle": "शुरू करने के लिए, एक ट्रांसक्रिप्शन मॉडल चुनें",
@@ -159,6 +161,10 @@
           "voice_command": {
             "name": "Voice Command Shortcut",
             "description": "Hold this shortcut and say an instruction to apply to the selected text."
+          },
+          "voice_note": {
+            "name": "Voice Note Shortcut",
+            "description": "Records a thought and saves it as a note instead of typing it."
           }
         },
         "errors": {
@@ -457,6 +463,22 @@
         "cancel": "रद्द करें",
         "selectToEdit": "जानकारी देखने और बदलाव करने के लिए, ऊपर कोई प्रॉम्प्ट चुनें.",
         "createFirst": "अपना पहला पोस्ट-प्रोसेसिंग प्रॉम्प्ट बनाने के लिए, ऊपर 'नया प्रॉम्प्ट बनाएं' पर क्लिक करें."
+      },
+      "appStyles": {
+        "title": "Style by app",
+        "description": "Handy adapts the writing style to the app you dictate into. The app is only checked when the post-processing shortcut is used, so this costs nothing otherwise.",
+        "enabled": {
+          "label": "Adapt to the app",
+          "description": "Formal in Mail and Gmail, casual in Slack, WhatsApp and Messages, precise in Terminal, code editors and Claude. Other apps use your selected prompt."
+        },
+        "empty": "Apps you dictate into with post-processing will show up here. Mail, Slack, Messages, Terminal, VS Code, Gmail and many others already have a suggested style.",
+        "defaultOption": "Default prompt ({{name}})",
+        "defaultOptionNone": "Default prompt (none selected)",
+        "suggested": "Suggested for this app",
+        "website": "Website",
+        "addApp": "Add an open app…",
+        "hint": "Styles are the prompts above: edit them or create your own.",
+        "forget": "Remove {{name}} from the list"
       }
     },
     "history": {
@@ -480,6 +502,17 @@
         "instruction": "“{{instruction}}”",
         "noResult": "No result. Run the command again with the retry icon.",
         "original": "Original text"
+      },
+      "edit": "Correct transcription",
+      "editSave": "Save",
+      "editCancel": "Cancel",
+      "editHint": "{{shortcut}} to save · Esc to cancel",
+      "editError": "Couldn't save your correction.",
+      "learn": {
+        "title": "Teach Handy this correction?",
+        "add": "Add",
+        "added": "Added",
+        "dismiss": "Not now"
       }
     },
     "stats": {
@@ -747,6 +780,87 @@
         "summarize": "“Summarize in two sentences”",
         "email": "“Write an email moving the meeting to Friday”"
       }
+    },
+    "dictionary": {
+      "title": "Dictionary",
+      "description": "Names and terms Handy should know, and fixes for what it mishears.",
+      "add": {
+        "heardPlaceholder": "Word or name",
+        "heardPlaceholderReplacement": "Heard, e.g. Andy",
+        "writtenPlaceholder": "Write instead (optional)",
+        "button": "Add",
+        "becomes": "becomes",
+        "hint": "Leave the second field empty to teach a word. Fill it in to fix a mishearing, e.g. “Andy” → “Handy”.",
+        "added": "“{{term}}” added to your dictionary"
+      },
+      "errors": {
+        "empty": "Type a word first.",
+        "too_long": "Keep it under 50 characters.",
+        "duplicate": "“{{term}}” is already in your dictionary.",
+        "generic": "Couldn't update the dictionary. Please try again."
+      },
+      "filterPlaceholder": "Search {{count}} entries",
+      "noMatch": "No entry matches “{{query}}”.",
+      "empty": {
+        "title": "Your dictionary is empty",
+        "body": "Add the names, brands and jargon you use. Tip: correct a dictation in History and Handy will offer to learn from it."
+      },
+      "entry": {
+        "remove": "Remove {{term}}",
+        "addedBy": "Added by {{name}} on {{date}}",
+        "addedOn": "Added on {{date}}",
+        "removed": "“{{term}}” removed",
+        "undo": "Undo"
+      },
+      "suggestions": {
+        "title": "Suggestions",
+        "description": "Names that keep coming up in your dictations.",
+        "seen_one": "seen {{count}} time",
+        "seen_other": "seen {{count}} times",
+        "add": "Add",
+        "dismiss": "Ignore",
+        "dismissLabel": "Ignore {{term}}"
+      },
+      "sharing": {
+        "title": "Sharing",
+        "description": "Share your dictionary with someone close through a shared folder or a file.",
+        "author": {
+          "title": "Your name",
+          "description": "Shown next to the words you add, for the people you share with.",
+          "placeholder": "First name"
+        },
+        "folder": {
+          "title": "Shared folder",
+          "description": "Choose the same folder on each Mac, such as a shared iCloud Drive or Dropbox folder. Handy syncs every minute and merges both sides, so no word is lost.",
+          "choose": "Choose folder…",
+          "dialogTitle": "Choose the folder to share your dictionary through",
+          "stop": "Stop",
+          "syncNow": "Sync now",
+          "syncing": "Syncing…",
+          "never": "Not synced yet",
+          "lastSync": "Synced {{time}}",
+          "stopped": "Sync stopped. Your words stay on this Mac."
+        },
+        "syncErrors": {
+          "folder_missing": "Folder not found. Is the drive connected?",
+          "not_downloaded": "iCloud hasn't downloaded the shared file to this Mac yet. Open the folder in Finder to fetch it.",
+          "unreadable": "The shared file can't be read, so it was left untouched.",
+          "write_failed": "Couldn't write to the shared folder. Check that it is writable."
+        },
+        "file": {
+          "title": "File",
+          "description": "Send your dictionary by AirDrop or email. Importing only adds words, it never removes any.",
+          "export": "Export…",
+          "import": "Import…",
+          "filterName": "Handy dictionary",
+          "exported_one": "{{count}} entry exported",
+          "exported_other": "{{count}} entries exported",
+          "imported": "Imported: {{added}} added, {{updated}} updated",
+          "importedNothing": "Nothing new in this file.",
+          "exportError": "Couldn't export the dictionary.",
+          "importError": "This file isn't a Handy dictionary."
+        }
+      }
     }
   },
   "footer": {
@@ -815,6 +929,7 @@
   "overlay": {
     "transcribing": "ट्रांसक्राइब हो रहा है...",
     "processing": "प्रोसेस हो रहा है...",
+    "processingStyle": "Style: {{style}}",
     "loadingModel": "मॉडल लोड हो रहा है...",
     "command": {
       "thinking": "Thinking...",
@@ -832,7 +947,9 @@
         "llm_failed": "The AI model didn't answer",
         "paste_failed": "Couldn't paste — copied"
       }
-    }
+    },
+    "noteSaved": "Note saved",
+    "noteFailed": "Note not saved"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} शायद 1 शॉर्टकट को ब्लॉक कर रहा है",
@@ -988,6 +1105,137 @@
       "pause": "Pause",
       "resume": "Resume",
       "stop": "Stop and write the minutes"
+    }
+  },
+  "notes": {
+    "title": "Notes",
+    "searchPlaceholder": "Search notes",
+    "clearSearch": "Clear search",
+    "settingsButton": "Notes settings",
+    "back": "Back to notes",
+    "loading": "Loading notes…",
+    "loadError": "Couldn't load your notes.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "count_one": "{{count}} note",
+    "count_other": "{{count}} notes",
+    "noResults": "No notes match “{{query}}”.",
+    "empty": {
+      "title": "No notes yet",
+      "description": "Press {{shortcut}}, say what's on your mind, and it lands here. Nothing gets typed in the app you're using."
+    },
+    "disabled": {
+      "title": "Voice notes are off",
+      "description": "Turn them on to capture a thought with a dedicated shortcut, without typing it anywhere.",
+      "enable": "Turn on"
+    },
+    "row": {
+      "expand": "Show the full note",
+      "collapse": "Collapse",
+      "aiProcessed": "Title and cleanup by AI",
+      "showOriginal": "Show what you said",
+      "hideOriginal": "Hide what you said",
+      "exportProblem": "A destination could not be updated"
+    },
+    "actions": {
+      "copy": "Copy",
+      "open": "Open",
+      "delete": "Delete",
+      "retry": "Retry"
+    },
+    "toasts": {
+      "deleted": "Note deleted",
+      "undo": "Undo",
+      "deleteLeftUntouched": "Note deleted from Handy. Its journal file was edited by hand, so it was left as is.",
+      "deleteError": "Couldn't delete the note.",
+      "openError": "Couldn't open the note.",
+      "copyError": "Couldn't copy the note.",
+      "retryError": "Couldn't retry.",
+      "saveError": "Couldn't save the setting."
+    },
+    "destinations": {
+      "markdown": "Markdown",
+      "notion": "Notion",
+      "apple_notes": "Apple Notes",
+      "pending": "{{name}}: sending…",
+      "done": "{{name}}: open",
+      "failed": "{{name}}: failed"
+    },
+    "errors": {
+      "permission_denied": "Handy can't write to this folder. Allow access in System Settings › Privacy & Security › Files and Folders.",
+      "io": "The note couldn't be written to the folder.",
+      "notion_invalid_token": "Notion rejected the token. Check it in your integration settings.",
+      "notion_page_not_found": "Notion can't see this page. Open it in Notion, then ••• › Connections › add your integration.",
+      "notion_invalid_page_link": "This doesn't look like a Notion page link.",
+      "notion_network": "Couldn't reach Notion. Check your connection.",
+      "notion_api": "Notion returned an error.",
+      "notion_token_missing": "Notion is no longer connected. Reconnect it in the notes settings.",
+      "notion_keychain": "Couldn't store the token in the Keychain.",
+      "apple_notes_denied": "Handy isn't allowed to control Notes. Allow it in System Settings › Privacy & Security › Automation.",
+      "apple_notes_failed": "Apple Notes returned an error.",
+      "generic": "Something went wrong."
+    },
+    "settings": {
+      "title": "Notes settings",
+      "capture": {
+        "title": "Capture",
+        "enabled": {
+          "label": "Voice notes",
+          "description": "A dedicated shortcut that saves what you say as a note instead of typing it."
+        },
+        "ai": {
+          "label": "AI title and cleanup",
+          "description": "Gives each note a title and removes hesitations, using your post-processing provider. Your words and your language are kept.",
+          "using": "Uses {{provider}}.",
+          "unavailableDisabled": "Turn on post-processing (Advanced › Experimental) and choose a provider to use this. Until then, the title comes from your first words.",
+          "unavailableNoProvider": "Choose a provider, model and API key in Post Process to use this. Until then, the title comes from your first words."
+        }
+      },
+      "markdown": {
+        "title": "Markdown folder",
+        "enabled": {
+          "label": "Save to a folder",
+          "description": "Plain Markdown files you can open in Obsidian, iA Writer or any editor."
+        },
+        "folder": {
+          "label": "Folder",
+          "description": "Where notes are written. Defaults to Documents › Handy Notes.",
+          "choose": "Choose…",
+          "reset": "Use default",
+          "open": "Open"
+        },
+        "layout": {
+          "label": "Files",
+          "description": "A journal file per day with one section per note, or one file per note.",
+          "daily": "One per day",
+          "per_note": "One per note"
+        }
+      },
+      "notion": {
+        "title": "Notion",
+        "description": "Each note becomes a page under a page you choose.",
+        "token": {
+          "label": "Integration token",
+          "placeholder": "ntn_…",
+          "help": "Create an internal integration at notion.so/profile/integrations, copy its token, then add the integration to the parent page (••• › Connections)."
+        },
+        "page": {
+          "label": "Parent page",
+          "placeholder": "Paste the page link"
+        },
+        "connect": "Connect",
+        "connecting": "Checking…",
+        "connected": "Notes go to “{{page}}”.",
+        "connectedUntitled": "Connected.",
+        "disconnect": "Disconnect",
+        "keychain": "The token is kept in your Keychain, never in Handy's settings file."
+      },
+      "appleNotes": {
+        "title": "Apple Notes",
+        "label": "Add to Apple Notes",
+        "description": "Each note is also added to a “Handy” folder in Notes. macOS asks for permission the first time.",
+        "openSettings": "Open System Settings"
+      }
     }
   }
 }

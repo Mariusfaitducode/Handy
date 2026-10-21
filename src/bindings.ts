@@ -1075,6 +1075,33 @@ async dismissDictionarySuggestion(key: string) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async getUsageStats() : Promise<Result<UsageStats, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_usage_stats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Returns the speed actually stored (clamped to a sensible range).
+ */
+async setStatsTypingSpeed(wpm: number) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_stats_typing_speed", { wpm }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async resetUsageStats() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("reset_usage_stats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
@@ -1213,6 +1240,121 @@ async revealMeetingExport(path: string) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async getVoiceNotes() : Promise<Result<VoiceNote[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_voice_notes") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getVoiceNotesStatus() : Promise<VoiceNotesStatus> {
+    return await TAURI_INVOKE("get_voice_notes_status");
+},
+/**
+ * Save the user-editable part of the voice notes settings. Notion fields
+ * are owned by `connect_notion` / `disconnect_notion` and preserved here.
+ */
+async updateVoiceNotesSettings(voiceNotes: VoiceNotesSettings) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_voice_notes_settings", { voiceNotes }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteVoiceNote(id: number) : Promise<Result<MarkdownDeleteOutcome, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_voice_note", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open a note where it lives: its Markdown file, else its Notion page,
+ * else Apple Notes.
+ */
+async openVoiceNote(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_note", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open a specific destination of a note (used by the destination chips).
+ */
+async openVoiceNoteDestination(id: number, destination: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_note_destination", { id, destination }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async retryVoiceNoteExports(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("retry_voice_note_exports", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async openVoiceNotesFolder() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_notes_folder") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Verify the token against the parent page, then store the token in the
+ * keychain and remember the page. Errors are stable codes the UI
+ * translates (`notion_invalid_token`, `notion_page_not_found`, …).
+ */
+async connectNotion(token: string, page: string) : Promise<Result<NotionConnection, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("connect_notion", { token, page }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async disconnectNotion() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("disconnect_notion") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Ask macOS for Automation access to Notes (shows the system prompt the
+ * first time). Errors: `apple_notes_denied`, `apple_notes_failed: …`.
+ */
+async checkAppleNotesAccess() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("check_apple_notes_access") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open the macOS privacy pane a voice-note destination needs:
+ * `automation` (Apple Notes) or `files` (Markdown folder).
+ */
+async openVoiceNotesPrivacySettings(pane: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_notes_privacy_settings", { pane }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -1228,7 +1370,8 @@ meetingSegmentRemovedEvent: MeetingSegmentRemovedEvent,
 meetingStatusEvent: MeetingStatusEvent,
 meetingUpdatedEvent: MeetingUpdatedEvent,
 streamPhaseEvent: StreamPhaseEvent,
-streamTextEvent: StreamTextEvent
+streamTextEvent: StreamTextEvent,
+voiceNotesChanged: VoiceNotesChanged
 }>({
 dictionaryChangedEvent: "dictionary-changed-event",
 historyUpdatePayload: "history-update-payload",
@@ -1238,7 +1381,8 @@ meetingSegmentRemovedEvent: "meeting-segment-removed-event",
 meetingStatusEvent: "meeting-status-event",
 meetingUpdatedEvent: "meeting-updated-event",
 streamPhaseEvent: "stream-phase-event",
-streamTextEvent: "stream-text-event"
+streamTextEvent: "stream-text-event",
+voiceNotesChanged: "voice-notes-changed"
 })
 
 /** user-defined constants **/
@@ -1351,7 +1495,11 @@ meeting?: MeetingSettings;
  * text when nothing is selected). Off by default so the extra global
  * shortcut is only registered for people who opt in.
  */
-voice_commands_enabled?: boolean }
+voice_commands_enabled?: boolean; 
+/**
+ * Voice notes (dedicated shortcut that saves instead of pasting).
+ */
+voice_notes?: VoiceNotesSettings }
 /**
  * An app or site the user recently dictated into (or added by hand), shown
  * in the settings list so mapping it is one click away.
@@ -1393,6 +1541,32 @@ export type ChineseScript =
 "as_transcribed" | "simplified" | "traditional"
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
+export type DailyUsage = { 
+/**
+ * Local calendar day, `YYYY-MM-DD`.
+ */
+day: string; words: number }
+/**
+ * Where a note stands for one destination.
+ */
+export type DestinationState = 
+/**
+ * Destination was not enabled when the note was taken.
+ */
+{ status: "off" } | 
+/**
+ * Export in flight.
+ */
+{ status: "pending" } | 
+/**
+ * Exported. `location` is a file path, a URL or an Apple Notes ID.
+ */
+{ status: "done"; location: string } | 
+/**
+ * Export failed; `error` is a stable code (the `ERR_*` constants of each
+ * destination module) the UI translates, optionally followed by `: detail`.
+ */
+{ status: "failed"; error: string }
 /**
  * Emitted whenever the dictionary changes, including from a background sync.
  */
@@ -1488,6 +1662,23 @@ key_down: number; key_up: number; flags_changed: number; mouse: number; duration
 export type KeyboardImplementation = "tauri" | "handy_keys"
 export type LLMPrompt = { id: string; name: string; prompt: string }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * Outcome of a delete for the Markdown copy, so the UI can tell the user
+ * when a hand-edited journal was left untouched.
+ */
+export type MarkdownDeleteOutcome = "none" | "removed" | "left_untouched" | "failed"
+/**
+ * How notes are laid out in the Markdown folder.
+ */
+export type MarkdownLayout = 
+/**
+ * One journal file per day (`2026-10-21.md`), one section per note.
+ */
+"daily" | 
+/**
+ * One file per note (`2026-10-21 14-32 Title.md`).
+ */
+"per_note"
 /**
  * What the Meetings section needs to explain before anything is recorded.
  */
@@ -1643,6 +1834,7 @@ sha256: string | null } } |
  */
 "Local"
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
+export type NotionConnection = { page_title: string | null }
 export type OverlayPosition = "top" | "bottom"
 /**
  * Which recording overlay to display. `Minimal` and `Live` share one base
@@ -1764,17 +1956,6 @@ export type StreamTextEvent = { committed: string; tentative: string }
  * Semantic kind of "working" phase, used to localize the spinner label.
  */
 export type StreamWorkKind = "transcribing" | "polishing"
-export type SyncError = { kind: SyncErrorKind; detail: string }
-/**
- * Why a sync or import did not go through. The frontend turns the kind into
- * a sentence; `detail` is only for the logs.
- */
-export type SyncErrorKind = "folder_missing" | 
-/**
- * iCloud has the file but has not downloaded it to this Mac yet.
- */
-"not_downloaded" | "unreadable" | "write_failed"
-export type SyncStatus = { folder: string | null; last_sync_at: number | null; error: SyncError | null }
 /**
  * State of a meeting's written summary.
  */
@@ -1791,6 +1972,17 @@ export type SummaryStatus =
  * Too little was said to summarize.
  */
 "empty"
+export type SyncError = { kind: SyncErrorKind; detail: string }
+/**
+ * Why a sync or import did not go through. The frontend turns the kind into
+ * a sentence; `detail` is only for the logs.
+ */
+export type SyncErrorKind = "folder_missing" | 
+/**
+ * iCloud has the file but has not downloaded it to this Mac yet.
+ */
+"not_downloaded" | "unreadable" | "write_failed"
+export type SyncStatus = { folder: string | null; last_sync_at: number | null; error: SyncError | null }
 /**
  * What the OS reports about the "System Audio Recording" permission.
  */
@@ -1826,7 +2018,104 @@ export type SystemAudioState =
 export type Theme = "system" | "light" | "dark"
 export type TranscribeAcceleratorSetting = "auto" | "cpu" | "gpu"
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
+export type UsageShare = { 
+/**
+ * App name, or language code (ISO 639-1) for languages.
+ */
+name: string; words: number }
+export type UsageStats = { total_words: number; total_dictations: number; today_words: number; 
+/**
+ * Rolling last 7 days, today included.
+ */
+week_words: number; 
+/**
+ * Estimated, never negative.
+ */
+time_saved_seconds: number; week_time_saved_seconds: number; current_streak_days: number; longest_streak_days: number; 
+/**
+ * Measured speaking pace, `None` until enough speech has been timed.
+ */
+speaking_wpm: number | null; typing_wpm: number; 
+/**
+ * One entry per day for the last `CHART_DAYS` days, oldest first,
+ * zero-filled.
+ */
+daily: DailyUsage[]; top_apps: UsageShare[]; 
+/**
+ * Words with a known app, to compute shares.
+ */
+app_words: number; languages: UsageShare[]; 
+/**
+ * Words with a known language, to compute shares.
+ */
+language_words: number; 
+/**
+ * First day with any activity.
+ */
+first_day: string | null }
 export type VadBackend = "silero" | "earshot"
+export type VoiceNote = { id: number; 
+/**
+ * Unix seconds.
+ */
+created_at: number; title: string; body: string; 
+/**
+ * The transcript before any cleanup, kept so nothing said is ever lost.
+ */
+raw_text: string; ai_processed: boolean; markdown: DestinationState; notion: DestinationState; apple_notes: DestinationState }
+/**
+ * Emitted whenever a note is added, updated (export finished) or deleted,
+ * so the Notes page can refresh.
+ */
+export type VoiceNotesChanged = { id: number }
+export type VoiceNotesSettings = { 
+/**
+ * Whether the voice-note shortcut is registered at all.
+ */
+enabled: boolean; 
+/**
+ * Title + light cleanup through the post-processing LLM, when one is
+ * configured. Without an LLM a title is derived from the first words.
+ */
+ai_cleanup: boolean; 
+/**
+ * Also write each note into a local Markdown folder.
+ */
+markdown_enabled: boolean; 
+/**
+ * `None` means the default folder (`~/Documents/Handy Notes`).
+ */
+markdown_folder: string | null; markdown_layout: MarkdownLayout; 
+/**
+ * Set once a Notion token was verified and stored in the keychain. The
+ * token itself never lives in this file.
+ */
+notion_connected: boolean; notion_parent_page_id: string | null; 
+/**
+ * Display name of the parent page, captured when connecting.
+ */
+notion_parent_title: string | null; 
+/**
+ * Also add each note to Apple Notes (macOS only), in a "Handy" folder.
+ */
+apple_notes_enabled: boolean }
+/**
+ * Everything the Notes page needs to render its settings, besides the
+ * persisted `voice_notes` settings themselves.
+ */
+export type VoiceNotesStatus = { 
+/**
+ * Label of the LLM provider used for titles/cleanup, if one is set up.
+ */
+llm_provider: string | null; 
+/**
+ * Folder used when no custom folder is chosen.
+ */
+default_folder: string | null; 
+/**
+ * Folder notes are written to right now.
+ */
+effective_folder: string | null; apple_notes_supported: boolean }
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
 /**
  * A dictionary "heard → written" pair, mirrored from the dictionary so the
