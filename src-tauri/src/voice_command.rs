@@ -314,15 +314,11 @@ pub(crate) fn is_terminal_target(
     }
 }
 
-/// In a terminal, a pasted line break can run a command: refuse to paste a
-/// result that has more line breaks than the selection it replaces.
-pub(crate) fn must_copy_instead_of_paste(
-    result: &str,
-    selection: Option<&str>,
-    terminal: bool,
-) -> bool {
-    let newlines = |s: &str| s.matches('\n').count();
-    terminal && newlines(result) > selection.map_or(0, newlines)
+/// In a terminal, a pasted line break can run a command: never paste a
+/// result containing any line terminator there (the selection's own edge
+/// whitespace is re-applied before this check, so a trailing newline counts).
+pub(crate) fn must_copy_instead_of_paste(result: &str, terminal: bool) -> bool {
+    terminal && result.contains(['\n', '\r', '\u{2028}', '\u{2029}', '\u{85}'])
 }
 
 /// Re-applies the selection's leading/trailing whitespace to the result, so
@@ -947,8 +943,10 @@ impl ShortcutAction for VoiceCommandAction {
                 let frontmost = pasteboard::frontmost_bundle_id();
                 #[cfg(not(target_os = "macos"))]
                 let frontmost: Option<String> = None;
-                let terminal = is_terminal_target(frontmost.as_deref(), copied_by_editor);
-                let outcome = if must_copy_instead_of_paste(&result, selection.as_deref(), terminal)
+                // Fail closed: an app we cannot identify may be a terminal.
+                let terminal = frontmost.is_none()
+                    || is_terminal_target(frontmost.as_deref(), copied_by_editor);
+                let outcome = if must_copy_instead_of_paste(&result, terminal)
                 {
                     warn!(
                         "Voice command: multi-line result for a terminal ({}), copied instead of pasted",
@@ -1208,14 +1206,17 @@ mod tests {
 
     #[test]
     fn multi_line_results_are_not_pasted_into_terminals() {
-        // New line breaks in a terminal: copy only.
-        assert!(must_copy_instead_of_paste("ls\nrm -rf ~", Some("ls"), true));
-        assert!(must_copy_instead_of_paste("a\nb", None, true));
-        // Same number of lines as the selection: fine.
-        assert!(!must_copy_instead_of_paste("x\ny", Some("a\nb"), true));
-        assert!(!must_copy_instead_of_paste("git status", None, true));
+        // Any line terminator in a terminal: copy only.
+        assert!(must_copy_instead_of_paste("ls\nrm -rf ~", true));
+        assert!(must_copy_instead_of_paste("a\nb", true));
+        assert!(must_copy_instead_of_paste("x\ny", true));
+        // A trailing newline re-applied from the selection would run the line.
+        assert!(must_copy_instead_of_paste("rm -rf ~\n", true));
+        assert!(must_copy_instead_of_paste("rm -rf ~\r", true));
+        assert!(must_copy_instead_of_paste("rm -rf ~\u{2028}", true));
+        assert!(!must_copy_instead_of_paste("git status", true));
         // Outside terminals, multi-line text is pasted as usual.
-        assert!(!must_copy_instead_of_paste("a\nb\nc", Some("a"), false));
+        assert!(!must_copy_instead_of_paste("a\nb\nc", false));
     }
 
     #[test]
