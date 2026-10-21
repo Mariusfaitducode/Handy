@@ -12,8 +12,9 @@ use std::sync::Mutex;
 
 use super::transcript::{MeetingSegment, Speaker};
 
-static MIGRATIONS: &[M] = &[M::up(
-    "CREATE TABLE meetings (
+static MIGRATIONS: &[M] = &[
+    M::up(
+        "CREATE TABLE meetings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         source TEXT NOT NULL,
@@ -38,7 +39,10 @@ static MIGRATIONS: &[M] = &[M::up(
     );
     CREATE INDEX meeting_segments_meeting ON meeting_segments (meeting_id, start_ms);
     CREATE INDEX meetings_started ON meetings (started_at);",
-)];
+    ),
+    // Who was invited, from the calendar event (JSON array of names).
+    M::up("ALTER TABLE meetings ADD COLUMN participants TEXT;"),
+];
 
 /// Where a meeting is in its life.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
@@ -167,6 +171,9 @@ pub struct MeetingRecord {
     /// "Provider · model" that wrote the summary.
     pub summary_model: Option<String>,
     pub segment_count: i64,
+    /// People invited to the calendar event it was started from (the user
+    /// excluded). Empty for meetings started by hand.
+    pub participants: Vec<String>,
 }
 
 pub struct NewMeeting<'a> {
@@ -184,7 +191,7 @@ pub struct MeetingStore {
 const RECORD_COLUMNS: &str = "m.id, m.title, m.source, m.calendar_event_id, m.started_at,
     m.ended_at, m.duration_ms, m.status, m.system_audio, m.summary, m.summary_status,
     m.summary_error, m.summary_model,
-    (SELECT COUNT(*) FROM meeting_segments s WHERE s.meeting_id = m.id)";
+    (SELECT COUNT(*) FROM meeting_segments s WHERE s.meeting_id = m.id), m.participants";
 
 impl MeetingStore {
     pub fn open(path: &Path) -> Result<Self> {
@@ -245,6 +252,10 @@ impl MeetingStore {
             summary_error: row.get(11)?,
             summary_model: row.get(12)?,
             segment_count: row.get(13)?,
+            participants: row
+                .get::<_, Option<String>>(14)?
+                .and_then(|json| serde_json::from_str(&json).ok())
+                .unwrap_or_default(),
         })
     }
 
@@ -339,6 +350,17 @@ impl MeetingStore {
                 duration_ms,
                 MeetingRecordStatus::Processing.as_str()
             ],
+        )?;
+        Ok(())
+    }
+
+    pub fn set_participants(&self, id: i64, participants: &[String]) -> Result<()> {
+        let json = (!participants.is_empty())
+            .then(|| serde_json::to_string(participants))
+            .transpose()?;
+        self.conn().execute(
+            "UPDATE meetings SET participants = ?1 WHERE id = ?2",
+            params![json, id],
         )?;
         Ok(())
     }
@@ -479,6 +501,10 @@ mod tests {
         let record = store.get(id).unwrap().unwrap();
         assert_eq!(record.status, MeetingRecordStatus::Recording);
         assert_eq!(record.segment_count, 2);
+        assert!(record.participants.is_empty());
+        let names = vec!["Yasmine".to_string(), "Alice Martin".to_string()];
+        store.set_participants(id, &names).unwrap();
+        assert_eq!(store.get(id).unwrap().unwrap().participants, names);
         assert_eq!(record.summary_status, SummaryStatus::None);
 
         let segments = store.segments(id).unwrap();

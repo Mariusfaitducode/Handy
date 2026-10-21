@@ -23,8 +23,10 @@ import {
 } from "./format";
 import { LiveMeetingCard } from "./LiveMeetingCard";
 import { MeetingDetail } from "./MeetingDetail";
+import { CalendarSettingsGroup } from "./CalendarSettingsGroup";
 import { MeetingSettingsGroup } from "./MeetingSettingsGroup";
 import { SystemAudioNotice } from "./SystemAudioNotice";
+import { UpcomingMeetings, useCalendarOverview } from "./UpcomingMeetings";
 import { useMeetingStatus } from "./useMeetingStatus";
 
 export const MeetingsSettings: React.FC = () => {
@@ -73,6 +75,8 @@ const MeetingsHome: React.FC<{ onOpen: (id: number) => void }> = ({
   const { t, i18n } = useTranslation();
   const { status, elapsedMs } = useMeetingStatus();
   const { meetings, failed } = useMeetings();
+  const { overview: calendar, setOverview: setCalendar } =
+    useCalendarOverview();
   const [capabilities, setCapabilities] = useState<MeetingCapabilities | null>(
     null,
   );
@@ -99,6 +103,8 @@ const MeetingsHome: React.FC<{ onOpen: (id: number) => void }> = ({
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
+      <UpcomingMeetings overview={calendar} onChange={setCalendar} />
+
       <div className="space-y-2">
         <div className="px-4">
           <h2 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
@@ -150,6 +156,7 @@ const MeetingsHome: React.FC<{ onOpen: (id: number) => void }> = ({
       )}
 
       <MeetingSettingsGroup capabilities={capabilities} />
+      <CalendarSettingsGroup overview={calendar} />
 
       <p className="px-4 text-xs text-mid-gray">{t("meetings.privacy")}</p>
     </div>

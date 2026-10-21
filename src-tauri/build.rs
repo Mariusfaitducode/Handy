@@ -5,6 +5,9 @@ fn main() {
     #[cfg(target_os = "macos")]
     build_system_audio_bridge();
 
+    #[cfg(target_os = "macos")]
+    build_calendar_bridge();
+
     generate_tray_translations();
 
     // Linux ships transcribe-cpp as a shared libtranscribe + loadable ggml
@@ -678,4 +681,75 @@ fn build_system_audio_bridge() {
     if arch != "arm64" {
         println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
     }
+}
+
+/// Compile the calendar bridge (EventKit, read-only) used to start meetings
+/// from calendar events. EventKit exists on every supported macOS; the Swift
+/// side guards the macOS 14 permission API with `#available`.
+#[cfg(target_os = "macos")]
+fn build_calendar_bridge() {
+    use std::env;
+    use std::path::PathBuf;
+    use std::process::Command;
+
+    const SWIFT_FILE: &str = "swift/calendar_bridge.swift";
+    println!("cargo:rerun-if-changed={SWIFT_FILE}");
+
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set"));
+    let object_path = out_dir.join("calendar_bridge.o");
+    let static_lib_path = out_dir.join("libhandy_calendar.a");
+
+    let xcrun = |args: &[&str]| {
+        let out = Command::new("xcrun")
+            .args(args)
+            .output()
+            .expect("Failed to invoke xcrun");
+        String::from_utf8(out.stdout)
+            .expect("xcrun output is not valid UTF-8")
+            .trim()
+            .to_string()
+    };
+    let sdk_path =
+        env::var("SDKROOT").unwrap_or_else(|_| xcrun(&["--sdk", "macosx", "--show-sdk-path"]));
+    let swiftc_path = env::var("SWIFTC").unwrap_or_else(|_| xcrun(&["--find", "swiftc"]));
+    let arch = match env::var("CARGO_CFG_TARGET_ARCH").as_deref() {
+        Ok("x86_64") => "x86_64",
+        _ => "arm64",
+    };
+    let target = format!("{arch}-apple-macosx11.0");
+    let object = object_path.to_str().expect("object path is not UTF-8");
+    let library = static_lib_path.to_str().expect("library path is not UTF-8");
+
+    let status = Command::new(&swiftc_path)
+        .args([
+            "-parse-as-library",
+            "-target",
+            &target,
+            "-sdk",
+            &sdk_path,
+            "-O",
+            "-c",
+            SWIFT_FILE,
+            "-o",
+            object,
+        ])
+        .status()
+        .expect("Failed to invoke swiftc for the calendar bridge");
+    if !status.success() {
+        panic!("swiftc failed to compile {SWIFT_FILE}");
+    }
+    let status = Command::new("libtool")
+        .args(["-static", "-o", library, object])
+        .status()
+        .expect("Failed to create static library for the calendar bridge");
+    if !status.success() {
+        panic!("libtool failed for the calendar bridge");
+    }
+
+    // The Swift runtime search paths and rpath are already added by the
+    // system audio bridge above.
+    println!("cargo:rustc-link-search=native={}", out_dir.display());
+    println!("cargo:rustc-link-lib=static=handy_calendar");
+    println!("cargo:rustc-link-lib=framework=EventKit");
+    println!("cargo:rustc-link-lib=framework=CoreGraphics");
 }

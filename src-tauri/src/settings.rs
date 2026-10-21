@@ -570,6 +570,9 @@ pub struct AppSettings {
     /// Voice notes (dedicated shortcut that saves instead of pasting).
     #[serde(default)]
     pub voice_notes: crate::notes::VoiceNotesSettings,
+    /// Calendar auto-start (mode, followed calendars, per-event choices).
+    #[serde(default)]
+    pub calendar: crate::calendar::CalendarSettings,
 }
 
 fn default_model() -> String {
@@ -1124,6 +1127,7 @@ pub fn get_default_settings() -> AppSettings {
         meeting: crate::meeting::MeetingSettings::default(),
         voice_commands_enabled: false,
         voice_notes: crate::notes::VoiceNotesSettings::default(),
+        calendar: crate::calendar::CalendarSettings::default(),
     }
 }
 
