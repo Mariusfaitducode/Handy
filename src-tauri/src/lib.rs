@@ -14,6 +14,7 @@ mod helpers;
 mod input;
 mod llm_client;
 mod managers;
+mod meeting;
 mod memory;
 mod overlay;
 mod paste_tx;
@@ -213,6 +214,12 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
     app_handle.manage(tray::TrayState::new());
+    match meeting::MeetingManager::new(app_handle) {
+        Ok(manager) => {
+            app_handle.manage(Arc::new(manager));
+        }
+        Err(e) => log::error!("Failed to initialize meeting manager: {e}"),
+    }
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -311,6 +318,23 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 
                 // Use centralized cancellation that handles all operations
                 cancel_current_operation(app);
+            }
+            "meeting_start" => {
+                let app = app.clone();
+                std::thread::spawn(move || {
+                    meeting::start_meeting_reporting_errors(
+                        &app,
+                        None,
+                        meeting::MeetingSource::Tray,
+                    )
+                });
+            }
+            "meeting_stop" => meeting::stop_meeting_reporting_errors(app),
+            "meeting_pause" => {
+                let _ = meeting::pause_meeting(app);
+            }
+            "meeting_resume" => {
+                let _ = meeting::resume_meeting(app);
             }
             "quit" => {
                 app.exit(0);
@@ -768,11 +792,32 @@ pub fn run(cli_args: CliArgs) {
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
             helpers::clamshell::is_laptop,
+            meeting::commands::start_meeting,
+            meeting::commands::stop_meeting,
+            meeting::commands::pause_meeting,
+            meeting::commands::resume_meeting,
+            meeting::commands::get_meeting_status,
+            meeting::commands::list_meetings,
+            meeting::commands::get_meeting,
+            meeting::commands::rename_meeting,
+            meeting::commands::delete_meeting,
+            meeting::commands::regenerate_meeting_summary,
+            meeting::commands::get_meeting_capabilities,
+            meeting::commands::update_meeting_settings,
+            meeting::commands::open_system_audio_settings,
+            meeting::commands::get_meeting_text,
+            meeting::commands::export_meeting_markdown,
+            meeting::commands::reveal_meeting_export,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,
             managers::transcription::StreamTextEvent,
             managers::transcription::StreamPhaseEvent,
+            meeting::MeetingStatusEvent,
+            meeting::MeetingSegmentEvent,
+            meeting::MeetingSegmentRemovedEvent,
+            meeting::MeetingUpdatedEvent,
+            meeting::MeetingErrorEvent,
         ]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
@@ -860,6 +905,8 @@ pub fn run(cli_args: CliArgs) {
                 signal_handle::send_transcription_input(app, "transcribe_with_post_process", "CLI");
             } else if args.iter().any(|a| a == "--cancel") {
                 crate::utils::cancel_current_operation(app);
+            } else if let Some((action, title)) = meeting::parse_cli_args(&args) {
+                meeting::run_cli_action(app, action, title);
             } else {
                 // A second process was launched without remote-control flags
                 // (e.g. the binary run from a shell). On macOS, relaunching the
@@ -1010,6 +1057,17 @@ pub fn run(cli_args: CliArgs) {
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
 
             initialize_core_logic(&app_handle);
+
+            // A meeting flag on the first launch (e.g. a script that opens
+            // Handy and starts recording) is honored once everything is up.
+            if cli_args.toggle_meeting || cli_args.start_meeting {
+                let action = if cli_args.start_meeting {
+                    meeting::CliMeetingAction::Start
+                } else {
+                    meeting::CliMeetingAction::Toggle
+                };
+                meeting::run_cli_action(&app_handle, action, cli_args.meeting_title.clone());
+            }
 
             // Secure Input monitor (macOS): detects stuck secure input that
             // silently blocks keyed shortcuts, warns the user, and activates

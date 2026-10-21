@@ -7,7 +7,11 @@
     "model": "Modello",
     "quit": "Esci",
     "cancel": "Annulla",
-    "secureInputWarning": "⚠ Scorciatoie bloccate da Secure Input"
+    "secureInputWarning": "⚠ Scorciatoie bloccate da Secure Input",
+    "startMeeting": "Start Meeting Recording",
+    "stopMeeting": "Stop Meeting",
+    "pauseMeeting": "Pause Meeting",
+    "resumeMeeting": "Resume Meeting"
   },
   "sidebar": {
     "general": "Generale",
@@ -16,7 +20,8 @@
     "postProcessing": "Post-Elaborazione",
     "history": "Cronologia",
     "debug": "Debug",
-    "about": "Informazioni"
+    "about": "Informazioni",
+    "meetings": "Meetings"
   },
   "onboarding": {
     "subtitle": "Per cominciare, scegli un modello di riconoscimento vocale",
@@ -171,6 +176,10 @@
           "transcribe_with_post_process": {
             "name": "Tasto di post-elaborazione",
             "description": "Facoltativo: Un tasto di scelta rapida dedicato che applica sempre la post-elaborazione IA alla trascrizione."
+          },
+          "toggle_meeting": {
+            "name": "Meeting Shortcut",
+            "description": "Starts recording a meeting, or stops the one in progress."
           }
         },
         "errors": {
@@ -706,5 +715,150 @@
     "learnMore": "Come risolvere",
     "recorderBlocked": "Non è possibile registrare scorciatoie in questo momento: Secure Input di macOS sta bloccando gli eventi dei tasti. Risolvi prima l'avviso di Secure Input.",
     "dismiss": "Ignora"
+  },
+  "meetings": {
+    "title": "Meetings",
+    "privacy": "Audio is transcribed on this Mac and never saved. Only the text is kept.",
+    "start": {
+      "titlePlaceholder": "Meeting name (optional)",
+      "button": "Start recording",
+      "starting": "Starting…",
+      "hint": "Records your voice and the sound of your Mac, so everyone on the call is transcribed.",
+      "hintMicOnly": "Records your microphone. Capturing the other participants needs macOS 14.2 or later.",
+      "shortcut": "Shortcut: {{shortcut}}"
+    },
+    "live": {
+      "recording": "Recording",
+      "paused": "Paused",
+      "finishing": "Transcribing the last sentences…",
+      "finishingCount_one": "Transcribing the last sentence…",
+      "finishingCount_other": "Transcribing the last {{count}} sentences…",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop",
+      "showTranscript": "Show transcript",
+      "untitled": "Meeting in progress"
+    },
+    "systemAudio": {
+      "denied": "Handy can't hear the other participants: system audio recording was refused. Only your microphone is transcribed.",
+      "unsupported": "Only your microphone is transcribed: capturing the other participants needs macOS 14.2 or later.",
+      "failed": "The sound of your Mac couldn't be captured. Only your microphone is transcribed.",
+      "openSettings": "Open System Settings",
+      "promptHint": "The first time, macOS asks to let Handy record system audio. Allow it so the other participants are transcribed."
+    },
+    "list": {
+      "emptyTitle": "No meetings yet",
+      "emptyBody": "Start recording when your call begins. Handy transcribes everyone as you talk and writes the minutes when you stop.",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "untitled": "Meeting on {{date}}",
+      "status": {
+        "recording": "Recording",
+        "processing": "Transcribing",
+        "summarizing": "Writing minutes",
+        "summary": "Minutes",
+        "transcript": "Transcript only",
+        "interrupted": "Interrupted",
+        "failed": "Minutes failed"
+      },
+      "loadError": "Couldn't load your meetings."
+    },
+    "detail": {
+      "back": "Meetings",
+      "rename": "Rename",
+      "renamePlaceholder": "Meeting name",
+      "tabs": {
+        "summary": "Minutes",
+        "transcript": "Transcript"
+      },
+      "speakers": {
+        "me": "Me",
+        "others": "Participants"
+      },
+      "copySummary": "Copy minutes",
+      "copyTranscript": "Copy transcript",
+      "copied": "Copied",
+      "copyError": "Couldn't copy to the clipboard",
+      "export": "Export as Markdown",
+      "exported": "Saved to {{folder}}",
+      "reveal": "Show in Finder",
+      "chooseFolder": "Choose where to save your meetings",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this meeting?",
+      "deleteConfirmBody": "Its transcript and minutes will be removed from this Mac. This can't be undone.",
+      "cancel": "Cancel",
+      "notFound": "This meeting no longer exists.",
+      "transcriptEmpty": "Nothing was transcribed.",
+      "transcriptWaiting": "Listening… The first sentences appear here a few seconds after they are spoken.",
+      "micOnly": "Microphone only",
+      "withSystemAudio": "Microphone and Mac sound",
+      "interrupted": "Handy stopped during this meeting. The transcript is kept up to that point."
+    },
+    "summary": {
+      "pending": "Writing the minutes…",
+      "inProgress": "The minutes are written when the meeting ends.",
+      "writtenBy": "Written by {{model}}",
+      "regenerate": "Rewrite",
+      "generate": "Write the minutes",
+      "retry": "Try again",
+      "failed": "The minutes couldn't be written.",
+      "empty": "Too little was said to write minutes.",
+      "none": "No minutes for this meeting yet.",
+      "notConfiguredTitle": "Minutes need a language model",
+      "notConfiguredBody": "The transcript is saved. To get a summary, decisions and action items, turn on post-processing in Advanced, then pick a provider (OpenAI, Anthropic, a local model with Ollama, Apple Intelligence…) in Post Process.",
+      "openSettings": "Open settings"
+    },
+    "settings": {
+      "title": "Meeting settings",
+      "autoSummary": {
+        "label": "Write minutes automatically",
+        "description": "When a meeting ends, send its transcript to your post-processing model to get a summary, decisions and action items.",
+        "using": "Uses {{model}}. The transcript is sent there, nowhere else.",
+        "notConfigured": "No language model is set up: meetings keep their transcript only."
+      },
+      "exportDir": {
+        "label": "Export folder",
+        "description": "Where meetings are saved as Markdown files, for example your notes app's folder.",
+        "choose": "Choose…",
+        "none": "Not set"
+      },
+      "autoExport": {
+        "label": "Export every meeting",
+        "description": "Save each finished meeting, with its minutes, as a Markdown file in the export folder."
+      },
+      "retention": {
+        "label": "Keep meetings",
+        "description": "Older meetings are deleted from this Mac automatically.",
+        "forever": "Forever",
+        "days_30": "30 days",
+        "days_90": "90 days",
+        "year": "1 year",
+        "confirmTitle": "Delete older meetings?",
+        "confirmBody": "Meetings older than {{period}} will be deleted from this Mac now, then automatically from now on."
+      },
+      "indicator": {
+        "label": "Floating recording indicator",
+        "description": "A small pill with the elapsed time, pause and stop, at the top right of the screen. Turn it off if it gets in the way of screen sharing."
+      }
+    },
+    "errors": {
+      "no_model": "Download a transcription model first, in Models.",
+      "microphone_permission_denied": "Handy isn't allowed to use the microphone. Allow it in System Settings › Privacy & Security › Microphone.",
+      "no_input_device": "No microphone was found.",
+      "already_recording": "A meeting is already being recorded.",
+      "still_finishing": "The previous meeting is still being transcribed. Try again in a moment.",
+      "not_recording": "No meeting is being recorded.",
+      "meeting_in_progress": "This meeting is still in progress.",
+      "export_dir_missing": "The export folder no longer exists. Choose another one.",
+      "generic": "Something went wrong: {{detail}}"
+    },
+    "indicator": {
+      "recording": "Recording meeting",
+      "paused": "Meeting paused",
+      "open": "Open in Handy",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop and write the minutes"
+    }
   }
 }
