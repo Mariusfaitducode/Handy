@@ -451,6 +451,22 @@
         "cancel": "Annuler",
         "selectToEdit": "Sélectionnez un prompt ci-dessus pour voir et modifier ses détails.",
         "createFirst": "Cliquez sur 'Créer un nouveau prompt' ci-dessus pour créer votre premier prompt de post-traitement."
+      },
+      "appStyles": {
+        "title": "Style selon l'app",
+        "description": "Handy adapte le style d'écriture à l'app dans laquelle vous dictez. L'app n'est consultée que lorsque vous utilisez le raccourci de post-traitement : aucun coût sinon.",
+        "enabled": {
+          "label": "Adapter le style à l'app",
+          "description": "Formel dans Mail et Gmail, décontracté dans Slack, WhatsApp et Messages, précis dans le Terminal, les éditeurs de code et Claude. Les autres apps utilisent votre prompt sélectionné."
+        },
+        "empty": "Les apps dans lesquelles vous dictez avec le post-traitement apparaîtront ici. Mail, Slack, Messages, Terminal, VS Code, Gmail et bien d'autres ont déjà un style suggéré.",
+        "defaultOption": "Prompt par défaut ({{name}})",
+        "defaultOptionNone": "Prompt par défaut (aucun)",
+        "suggested": "Suggéré pour cette app",
+        "website": "Site web",
+        "addApp": "Ajouter une app ouverte…",
+        "hint": "Les styles sont les prompts ci-dessus : modifiez-les ou créez le vôtre.",
+        "forget": "Retirer {{name}} de la liste"
       }
     },
     "history": {
@@ -700,6 +716,7 @@
   "overlay": {
     "transcribing": "Transcription...",
     "processing": "Traitement...",
+    "processingStyle": "Style : {{style}}",
     "loadingModel": "Chargement du modèle..."
   },
   "whatsNew": {

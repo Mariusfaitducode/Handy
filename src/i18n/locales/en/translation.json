@@ -451,6 +451,22 @@
         "cancel": "Cancel",
         "selectToEdit": "Select a prompt above to view and edit its details.",
         "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt."
+      },
+      "appStyles": {
+        "title": "Style by app",
+        "description": "Handy adapts the writing style to the app you dictate into. The app is only checked when the post-processing shortcut is used, so this costs nothing otherwise.",
+        "enabled": {
+          "label": "Adapt to the app",
+          "description": "Formal in Mail and Gmail, casual in Slack, WhatsApp and Messages, precise in Terminal, code editors and Claude. Other apps use your selected prompt."
+        },
+        "empty": "Apps you dictate into with post-processing will show up here. Mail, Slack, Messages, Terminal, VS Code, Gmail and many others already have a suggested style.",
+        "defaultOption": "Default prompt ({{name}})",
+        "defaultOptionNone": "Default prompt (none selected)",
+        "suggested": "Suggested for this app",
+        "website": "Website",
+        "addApp": "Add an open app…",
+        "hint": "Styles are the prompts above: edit them or create your own.",
+        "forget": "Remove {{name}} from the list"
       }
     },
     "history": {
@@ -703,6 +719,7 @@
   "overlay": {
     "transcribing": "Transcribing...",
     "processing": "Processing...",
+    "processingStyle": "Style: {{style}}",
     "loadingModel": "Loading model..."
   },
   "secureInput": {

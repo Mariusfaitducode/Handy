@@ -610,6 +610,15 @@ pub fn emit_recording_ready(app_handle: &AppHandle) {
     });
 }
 
+/// Tells the overlay which app style (prompt name) is polishing the current
+/// dictation, or `None` for the default prompt. Shown in the working label.
+pub fn emit_overlay_style(app_handle: &AppHandle, style: Option<String>) {
+    if !OVERLAY_ENABLED.load(Ordering::Relaxed) {
+        return;
+    }
+    let _ = app_handle.emit_to("recording_overlay", "overlay-style", style);
+}
+
 /// Shows the recording overlay window with fade-in animation
 pub fn show_recording_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "recording");
