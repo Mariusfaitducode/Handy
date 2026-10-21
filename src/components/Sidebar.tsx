@@ -8,6 +8,7 @@ import {
   Sparkles,
   Cpu,
   Users,
+  WandSparkles,
 } from "lucide-react";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import HandyHand from "./icons/HandyHand";
@@ -21,6 +22,7 @@ import {
   PostProcessingSettings,
   ModelsSettings,
   MeetingsSettings,
+  VoiceCommandsSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -69,6 +71,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.advanced",
     icon: Cog,
     component: AdvancedSettings,
+    enabled: () => true,
+  },
+  voicecommands: {
+    labelKey: "sidebar.voiceCommands",
+    icon: WandSparkles,
+    component: VoiceCommandsSettings,
     enabled: () => true,
   },
   postprocessing: {

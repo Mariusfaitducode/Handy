@@ -29,6 +29,7 @@ mod transcription_coordinator;
 mod tray;
 mod tray_i18n;
 mod utils;
+mod voice_command;
 
 pub use cli::CliArgs;
 #[cfg(debug_assertions)]
@@ -709,6 +710,7 @@ pub fn run(cli_args: CliArgs) {
             app_styles::change_app_styles_enabled_setting,
             app_styles::list_running_apps_for_styles,
             shortcut::change_experimental_enabled_setting,
+            voice_command::change_voice_commands_enabled_setting,
             shortcut::change_post_process_base_url_setting,
             shortcut::change_post_process_api_format_setting,
             shortcut::change_post_process_api_key_setting,

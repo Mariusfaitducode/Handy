@@ -13,7 +13,36 @@ import i18n, { syncLanguageFromSettings } from "@/i18n";
 import type { ModelStateEvent } from "@/lib/types/events";
 import { getLanguageDirection } from "@/lib/utils/rtl";
 
-type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
+type CommandState =
+  | "command_listening"
+  | "command_thinking"
+  | "command_done"
+  | "command_error";
+
+type OverlayState =
+  | "recording"
+  | "streaming"
+  | "transcribing"
+  | "processing"
+  | CommandState;
+
+/** Payload of `voice-command-status` (see voice_command.rs). */
+interface CommandDetail {
+  has_selection: boolean;
+  error:
+    | "no_llm"
+    | "secure_input"
+    | "no_instruction"
+    | "selection_too_long"
+    | "transcription_failed"
+    | "llm_failed"
+    | "paste_failed"
+    | null;
+  outcome: "replaced" | "inserted" | "copied" | null;
+}
+
+const isCommandState = (state: OverlayState): state is CommandState =>
+  state.startsWith("command_");
 
 // Number of reactive bars in the waveform (the simple, smoothed style shared by
 // every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
@@ -63,6 +92,11 @@ const RecordingOverlay: React.FC = () => {
   const [overflowing, setOverflowing] = useState(false);
   // Name of the app style polishing this dictation (Style by app), if any.
   const [styleLabel, setStyleLabel] = useState<string | null>(null);
+  const [commandDetail, setCommandDetail] = useState<CommandDetail>({
+    has_selection: false,
+    error: null,
+    outcome: null,
+  });
 
   const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
   // Live-text scroll-back: the text region "sticks" to the newest line while the
@@ -110,6 +144,11 @@ const RecordingOverlay: React.FC = () => {
         }
         setIsVisible(true);
       });
+
+      const unlistenCommand = await listen<CommandDetail>(
+        "voice-command-status",
+        (event) => setCommandDetail(event.payload),
+      );
 
       const unlistenHide = await listen("hide-overlay", () => {
         setIsVisible(false);
@@ -177,6 +216,7 @@ const RecordingOverlay: React.FC = () => {
 
       return () => {
         unlistenShow();
+        unlistenCommand();
         unlistenHide();
         unlistenReady();
         unlistenStyle();
@@ -352,6 +392,108 @@ const RecordingOverlay: React.FC = () => {
               )
             : listeningRow(open, true)}
         </div>
+      </div>
+    );
+  }
+
+  // ---- Voice command: the same compact pill, with a wand instead of the dot
+  // while listening, then thinking -> done / error. Messages get a wider pill.
+  if (isCommandState(state)) {
+    const glyph = (kind: "wand" | "check" | "alert") => (
+      <svg
+        className={`sglyph ${kind} ${kind === "wand" && !captureReady ? "arming" : ""}`}
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        {kind === "wand" && (
+          <path
+            d="M3 13 L10 6 M8.5 2.5 v2 M7.5 3.5 h2 M12.5 6.5 v2 M11.5 7.5 h2 M12 2 v1.4 M11.3 2.7 h1.4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            fill="none"
+          />
+        )}
+        {kind === "check" && (
+          <path
+            d="M3.5 8.5 L6.5 11.5 L12.5 4.5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        )}
+        {kind === "alert" && (
+          <>
+            <circle
+              cx="8"
+              cy="8"
+              r="6"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              fill="none"
+            />
+            <path
+              d="M8 4.8 v3.6"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+            <circle cx="8" cy="11" r="0.9" fill="currentColor" />
+          </>
+        )}
+      </svg>
+    );
+
+    const messageRow = (kind: "check" | "alert", label: string) => (
+      <div className="sbase">
+        <div className="sbase-l">{glyph(kind)}</div>
+        <span className="swork-label" title={label}>
+          {label}
+        </span>
+        <div className="sbase-r" />
+      </div>
+    );
+
+    let row: React.ReactNode;
+    let width = "";
+    if (state === "command_listening") {
+      row = (
+        <div className="sbase">
+          <div className="sbase-l">{glyph("wand")}</div>
+          {waveform}
+          <div className="sbase-r">{cancelBtn}</div>
+        </div>
+      );
+    } else if (state === "command_thinking") {
+      width = "cworking";
+      row = workingRow(
+        modelLoading
+          ? t("overlay.loadingModel")
+          : t("overlay.command.thinking"),
+        true,
+      );
+    } else if (state === "command_done") {
+      width = "cworking";
+      row = messageRow(
+        "check",
+        t(`overlay.command.done.${commandDetail.outcome ?? "inserted"}`),
+      );
+    } else {
+      width = "cmsg";
+      row = messageRow(
+        "alert",
+        t(`overlay.command.errors.${commandDetail.error ?? "llm_failed"}`),
+      );
+    }
+
+    return (
+      <div
+        dir={direction}
+        className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
+      >
+        <div className={`scard compact command ${width}`}>{row}</div>
       </div>
     );
   }

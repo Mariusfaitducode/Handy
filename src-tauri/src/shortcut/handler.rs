@@ -58,10 +58,11 @@ pub fn handle_shortcut_event(
         return;
     };
 
-    // Cancel binding: only fires when recording and key is pressed
+    // Cancel binding: only fires when recording (or while a voice command is
+    // still thinking, which can take seconds) and key is pressed
     if binding_id == "cancel" {
         let audio_manager = app.state::<Arc<AudioRecordingManager>>();
-        if audio_manager.is_recording() && is_pressed {
+        if (audio_manager.is_recording() || crate::voice_command::is_processing()) && is_pressed {
             action.start(app, binding_id, hotkey_string);
         }
         return;

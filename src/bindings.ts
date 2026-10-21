@@ -265,6 +265,14 @@ async changeExperimentalEnabledSetting(enabled: boolean) : Promise<Result<null, 
     else return { status: "error", error: e  as any };
 }
 },
+async changeVoiceCommandsEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_voice_commands_enabled_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async changePostProcessBaseUrlSetting(providerId: string, baseUrl: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_post_process_base_url_setting", { providerId, baseUrl }) };
@@ -1230,7 +1238,14 @@ overlay_style?: OverlayStyle;
 /**
  * Meeting mode preferences (summary, export, retention, indicator).
  */
-meeting?: MeetingSettings }
+meeting?: MeetingSettings; 
+/**
+ * Voice commands: hold a dedicated shortcut and speak an instruction that
+ * the configured LLM applies to the selected text (or uses to write new
+ * text when nothing is selected). Off by default so the extra global
+ * shortcut is only registered for people who opt in.
+ */
+voice_commands_enabled?: boolean }
 /**
  * An app or site the user recently dictated into (or added by hand), shown
  * in the settings list so mapping it is one click away.
@@ -1273,7 +1288,15 @@ export type ChineseScript =
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
-export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
+export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean; 
+/**
+ * True for voice command entries (instruction → result).
+ */
+voice_command: boolean; 
+/**
+ * Voice commands only: the selection the instruction was applied to.
+ */
+command_source_text: string | null }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
 /**
  * Result of changing keyboard implementation

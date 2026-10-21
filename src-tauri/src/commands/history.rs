@@ -93,6 +93,23 @@ pub async fn retry_history_entry_transcription(
         return Err("Recording contains no speech".to_string());
     }
 
+    if entry.voice_command {
+        // Re-run the command on the text it was originally applied to. The
+        // result is only stored (nothing is pasted): the selection is gone.
+        let settings = crate::settings::get_settings(&app);
+        let result = crate::voice_command::run_command(
+            &settings,
+            &transcription,
+            entry.command_source_text.as_deref(),
+        )
+        .await;
+        let failure = result.as_ref().err().cloned();
+        history_manager
+            .update_transcription(id, transcription, result.ok(), None)
+            .map_err(|e| e.to_string())?;
+        return failure.map_or(Ok(()), Err);
+    }
+
     let processed =
         process_transcription_output(&app, &transcription, entry.post_process_requested, None)
             .await;

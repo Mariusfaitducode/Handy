@@ -21,7 +21,8 @@
     "history": "Historique",
     "debug": "Débogage",
     "about": "À propos",
-    "meetings": "Réunions"
+    "meetings": "Réunions",
+    "voiceCommands": "Commandes"
   },
   "onboarding": {
     "subtitle": "Pour commencer, choisissez un modèle de transcription",
@@ -180,6 +181,10 @@
           "toggle_meeting": {
             "name": "Raccourci de réunion",
             "description": "Démarre l'enregistrement d'une réunion, ou arrête celle en cours."
+          },
+          "voice_command": {
+            "name": "Raccourci des commandes",
+            "description": "Maintenez ce raccourci et dites une instruction à appliquer au texte sélectionné."
           }
         },
         "errors": {
@@ -483,7 +488,14 @@
       "retranscribe": "Re-transcrire",
       "retranscribeError": "Impossible de re-transcrire. Veuillez réessayer.",
       "transcribing": "Transcription en cours...",
-      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai."
+      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai.",
+      "command": {
+        "badge": "Commande",
+        "retry": "Relancer la commande",
+        "instruction": "« {{instruction}} »",
+        "noResult": "Aucun résultat. Relancez la commande avec l’icône de réessai.",
+        "original": "Texte d’origine"
+      }
     },
     "debug": {
       "title": "Débogage",
@@ -651,6 +663,33 @@
         "label": "Afficher les nouveautés",
         "description": "Afficher les notes de version après les mises à jour de Handy"
       }
+    },
+    "voiceCommands": {
+      "title": "Commandes vocales",
+      "enable": {
+        "label": "Activer les commandes vocales",
+        "description": "Sélectionnez du texte, maintenez le raccourci et dites quoi en faire. Sans sélection, Handy rédige le texte à l’emplacement du curseur."
+      },
+      "model": {
+        "title": "Modèle IA",
+        "description": "Partagé avec le post-traitement : les commandes utilisent ce fournisseur et ce modèle.",
+        "missing": "Choisissez un fournisseur, un modèle et une clé API pour utiliser les commandes vocales."
+      },
+      "howTo": {
+        "title": "Comment ça marche",
+        "select": "Sélectionnez du texte dans n’importe quelle app — ou rien, pour rédiger un nouveau texte.",
+        "hold": "Maintenez {{shortcut}} et dites ce que vous voulez.",
+        "release": "Relâchez : le résultat remplace la sélection. Échap pour interrompre ; l’original reste dans l’historique.",
+        "privacy": "La sélection et votre instruction sont envoyées au fournisseur IA choisi. Les champs sécurisés, comme les mots de passe, ne sont jamais lus."
+      },
+      "examples": {
+        "title": "Essayez",
+        "list": "« Mets ça en liste à puces »",
+        "translate": "« Traduis en anglais »",
+        "polite": "« Rends ça plus poli »",
+        "summarize": "« Résume en deux phrases »",
+        "email": "« Écris un mail pour décaler la réunion à vendredi »"
+      }
     }
   },
   "footer": {
@@ -717,7 +756,24 @@
     "transcribing": "Transcription...",
     "processing": "Traitement...",
     "processingStyle": "Style : {{style}}",
-    "loadingModel": "Chargement du modèle..."
+    "loadingModel": "Chargement du modèle...",
+    "command": {
+      "thinking": "Réflexion...",
+      "done": {
+        "replaced": "Sélection remplacée",
+        "inserted": "Texte inséré",
+        "copied": "Copié dans le presse-papiers"
+      },
+      "errors": {
+        "no_llm": "Configurez un modèle IA",
+        "secure_input": "Saisie sécurisée active",
+        "no_instruction": "Aucune instruction entendue",
+        "selection_too_long": "Sélection trop longue",
+        "transcription_failed": "Transcription impossible",
+        "llm_failed": "Le modèle IA n’a pas répondu",
+        "paste_failed": "Collage impossible — copié"
+      }
+    }
   },
   "whatsNew": {
     "title": "Nouveautés de Handy v{{version}}"

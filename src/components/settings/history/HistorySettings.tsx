@@ -259,7 +259,13 @@ export const HistorySettings: React.FC = () => {
                 key={entry.id}
                 entry={entry}
                 onToggleSaved={() => toggleSaved(entry.id)}
-                onCopyText={() => copyToClipboard(entry.transcription_text)}
+                onCopyText={() =>
+                  copyToClipboard(
+                    entry.voice_command
+                      ? (entry.post_processed_text ?? entry.transcription_text)
+                      : entry.transcription_text,
+                  )
+                }
                 getAudioUrl={getAudioUrl}
                 deleteAudio={deleteAudioEntry}
                 retryTranscription={retryHistoryEntry}
@@ -317,6 +323,8 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const [retrying, setRetrying] = useState(false);
 
   const hasTranscription = entry.transcription_text.trim().length > 0;
+  const isCommand = entry.voice_command;
+  const commandResult = entry.post_processed_text?.trim() ?? "";
 
   const handleLoadAudio = useCallback(
     () => getAudioUrl(entry.file_name),
@@ -364,7 +372,14 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   return (
     <div className="px-4 py-2 pb-5 flex flex-col gap-3">
       <div className="flex justify-between items-center">
-        <p className="text-sm font-medium">{formattedDate}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          <p className="text-sm font-medium">{formattedDate}</p>
+          {isCommand && (
+            <span className="rounded-full border border-mid-gray/30 px-2 py-0.5 text-[11px] leading-4 text-mid-gray">
+              {t("settings.history.command.badge")}
+            </span>
+          )}
+        </div>
         <div className="flex items-center">
           <IconButton
             onClick={handleCopyText}
@@ -396,7 +411,11 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
           <IconButton
             onClick={handleRetranscribe}
             disabled={retrying}
-            title={t("settings.history.retranscribe")}
+            title={
+              isCommand
+                ? t("settings.history.command.retry")
+                : t("settings.history.retranscribe")
+            }
           >
             <RotateCcw
               width={16}
@@ -418,34 +437,67 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
         </div>
       </div>
 
-      <p
-        className={`italic text-sm pb-2 ${
-          retrying
-            ? ""
-            : hasTranscription
-              ? "text-text/90 select-text cursor-text whitespace-pre-wrap break-words"
-              : "text-text/40"
-        }`}
-        style={
-          retrying
-            ? { animation: "transcribe-pulse 3s ease-in-out infinite" }
-            : undefined
-        }
-      >
-        {retrying && (
-          <style>{`
+      {isCommand && !retrying ? (
+        <div className="flex flex-col gap-2 pb-2">
+          <p className="text-sm italic text-mid-gray select-text cursor-text break-words">
+            {hasTranscription
+              ? t("settings.history.command.instruction", {
+                  instruction: entry.transcription_text,
+                })
+              : t("settings.history.transcriptionFailed")}
+          </p>
+          {hasTranscription && (
+            <p
+              className={`text-sm whitespace-pre-wrap break-words ${
+                commandResult
+                  ? "text-text/90 select-text cursor-text"
+                  : "text-text/40"
+              }`}
+            >
+              {commandResult || t("settings.history.command.noResult")}
+            </p>
+          )}
+          {entry.command_source_text && (
+            <details className="group text-xs text-mid-gray">
+              <summary className="cursor-pointer select-none w-fit hover:text-text/80 transition-colors">
+                {t("settings.history.command.original")}
+              </summary>
+              <p className="mt-1.5 ps-3 border-s border-mid-gray/30 text-text/60 whitespace-pre-wrap break-words select-text cursor-text">
+                {entry.command_source_text}
+              </p>
+            </details>
+          )}
+        </div>
+      ) : (
+        <p
+          className={`italic text-sm pb-2 ${
+            retrying
+              ? ""
+              : hasTranscription
+                ? "text-text/90 select-text cursor-text whitespace-pre-wrap break-words"
+                : "text-text/40"
+          }`}
+          style={
+            retrying
+              ? { animation: "transcribe-pulse 3s ease-in-out infinite" }
+              : undefined
+          }
+        >
+          {retrying && (
+            <style>{`
             @keyframes transcribe-pulse {
               0%, 100% { color: color-mix(in srgb, var(--color-text) 40%, transparent); }
               50% { color: color-mix(in srgb, var(--color-text) 90%, transparent); }
             }
           `}</style>
-        )}
-        {retrying
-          ? t("settings.history.transcribing")
-          : hasTranscription
-            ? entry.transcription_text
-            : t("settings.history.transcriptionFailed")}
-      </p>
+          )}
+          {retrying
+            ? t("settings.history.transcribing")
+            : hasTranscription
+              ? entry.transcription_text
+              : t("settings.history.transcriptionFailed")}
+        </p>
+      )}
 
       <AudioPlayer onLoadRequest={handleLoadAudio} className="w-full" />
     </div>

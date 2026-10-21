@@ -21,7 +21,8 @@
     "history": "Riwayat",
     "debug": "Debug",
     "about": "Tentang",
-    "meetings": "Meetings"
+    "meetings": "Meetings",
+    "voiceCommands": "Commands"
   },
   "onboarding": {
     "subtitle": "Untuk memulai, pilih model transkripsi",
@@ -153,6 +154,10 @@
           "toggle_meeting": {
             "name": "Meeting Shortcut",
             "description": "Starts recording a meeting, or stops the one in progress."
+          },
+          "voice_command": {
+            "name": "Voice Command Shortcut",
+            "description": "Hold this shortcut and say an instruction to apply to the selected text."
           }
         },
         "errors": {
@@ -467,7 +472,14 @@
       "retranscribe": "Transkripsikan ulang",
       "retranscribeError": "Gagal mentranskripsikan ulang. Silakan coba lagi.",
       "transcribing": "Mentranskripsikan...",
-      "transcriptionFailed": "Transkripsi gagal. Anda dapat mentranskripsikan ulang menggunakan ikon coba lagi."
+      "transcriptionFailed": "Transkripsi gagal. Anda dapat mentranskripsikan ulang menggunakan ikon coba lagi.",
+      "command": {
+        "badge": "Command",
+        "retry": "Run the command again",
+        "instruction": "“{{instruction}}”",
+        "noResult": "No result. Run the command again with the retry icon.",
+        "original": "Original text"
+      }
     },
     "debug": {
       "title": "Debug",
@@ -635,6 +647,33 @@
           "details": "Fitur ucapan-ke-teks lokal Handy dibangun menggunakan transcribe.cpp dan ggml. Terima kasih kepada Georgi Gerganov dan para kontributor atas karya luar biasa mereka."
         }
       }
+    },
+    "voiceCommands": {
+      "title": "Voice commands",
+      "enable": {
+        "label": "Enable voice commands",
+        "description": "Select text, hold the shortcut and say what to do with it. With nothing selected, Handy writes the text at the cursor."
+      },
+      "model": {
+        "title": "AI model",
+        "description": "Shared with post-processing: voice commands use this provider and model.",
+        "missing": "Choose a provider, a model and an API key to use voice commands."
+      },
+      "howTo": {
+        "title": "How it works",
+        "select": "Select text in any app — or nothing, to write new text.",
+        "hold": "Hold {{shortcut}} and say what you want.",
+        "release": "Release: the result replaces the selection. Press Escape to stop; the original stays in History.",
+        "privacy": "The selection and your instruction are sent to the AI provider you chose. Secure fields such as passwords are never read."
+      },
+      "examples": {
+        "title": "Try saying",
+        "list": "“Make this a bulleted list”",
+        "translate": "“Translate into English”",
+        "polite": "“Make it more polite”",
+        "summarize": "“Summarize in two sentences”",
+        "email": "“Write an email moving the meeting to Friday”"
+      }
     }
   },
   "footer": {
@@ -703,7 +742,24 @@
   "overlay": {
     "transcribing": "Mentranskripsikan...",
     "processing": "Memproses...",
-    "loadingModel": "Memuat model..."
+    "loadingModel": "Memuat model...",
+    "command": {
+      "thinking": "Thinking...",
+      "done": {
+        "replaced": "Selection replaced",
+        "inserted": "Text inserted",
+        "copied": "Copied to clipboard"
+      },
+      "errors": {
+        "no_llm": "Set up an AI model first",
+        "secure_input": "Secure input is on",
+        "no_instruction": "No instruction heard",
+        "selection_too_long": "Selection is too long",
+        "transcription_failed": "Couldn't transcribe",
+        "llm_failed": "The AI model didn't answer",
+        "paste_failed": "Couldn't paste — copied"
+      }
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} mungkin memblokir 1 pintasan",
