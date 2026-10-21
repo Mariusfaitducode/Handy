@@ -858,7 +858,9 @@
           "imported": "Import terminé : {{added}} ajoutée(s), {{updated}} mise(s) à jour",
           "importedNothing": "Rien de nouveau dans ce fichier.",
           "exportError": "Impossible d'exporter le dictionnaire.",
-          "importError": "Ce fichier n'est pas un dictionnaire Handy."
+          "importError": "Ce fichier n'est pas un dictionnaire Handy.",
+          "exportNotDictionary": "Ce fichier existe déjà et n'est pas un dictionnaire Handy : il n'a pas été remplacé.",
+          "exportNotJson": "Le dictionnaire doit être enregistré dans un fichier .json."
         }
       }
     }

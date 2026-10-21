@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { open, save } from "@tauri-apps/plugin-dialog";
 import { Download, FolderSync, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,8 +9,6 @@ import { Input } from "../../ui/Input";
 import { SettingContainer } from "../../ui/SettingContainer";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { friendlyFolderPath } from "./useDictionary";
-
-const FILE_FILTER_EXTENSIONS = ["json"];
 
 interface SharingSettingsProps {
   snapshot: DictionarySnapshot;
@@ -103,14 +100,14 @@ const FolderSetting: React.FC<SharingSettingsProps> = ({
 
   const run = async (
     action: () => Promise<
-      | { status: "ok"; data: DictionarySnapshot }
+      | { status: "ok"; data: DictionarySnapshot | null }
       | { status: "error"; error: string }
     >,
   ) => {
     setSyncing(true);
     try {
       const result = await action();
-      if (result.status === "ok") onChange(result.data);
+      if (result.status === "ok" && result.data) onChange(result.data);
     } catch (e) {
       console.error("Dictionary sync failed:", e);
     } finally {
@@ -118,20 +115,17 @@ const FolderSetting: React.FC<SharingSettingsProps> = ({
     }
   };
 
-  const choose = async () => {
-    const picked = await open({
-      directory: true,
-      multiple: false,
-      title: t("settings.dictionary.sharing.folder.dialogTitle"),
-    });
-    if (typeof picked === "string") {
-      run(() => commands.setDictionarySyncFolder(picked));
-    }
-  };
+  // The dialog opens on the Rust side, so the webview never hands it a path.
+  const choose = () =>
+    run(() =>
+      commands.chooseDictionarySyncFolder(
+        t("settings.dictionary.sharing.folder.dialogTitle"),
+      ),
+    );
 
   const stop = () =>
     run(async () => {
-      const result = await commands.setDictionarySyncFolder(null);
+      const result = await commands.stopDictionarySync();
       if (result.status === "ok") {
         toast(t("settings.dictionary.sharing.folder.stopped"));
       }
@@ -202,27 +196,23 @@ const FileSetting: React.FC<{
   onChange: (snapshot: DictionarySnapshot) => void;
 }> = ({ onChange }) => {
   const { t } = useTranslation();
-  const filters = [
-    {
-      name: t("settings.dictionary.sharing.file.filterName"),
-      extensions: FILE_FILTER_EXTENSIONS,
-    },
-  ];
+  const filterName = t("settings.dictionary.sharing.file.filterName");
 
+  // Both dialogs open on the Rust side, so the webview never hands it a path.
   const exportFile = async () => {
-    const path = await save({
-      defaultPath: "handy-dictionary.json",
-      filters,
-    });
-    if (!path) return;
     try {
-      const result = await commands.exportDictionary(path);
+      const result = await commands.exportDictionary(filterName);
       if (result.status === "ok") {
+        if (result.data === null) return;
         toast.success(
           t("settings.dictionary.sharing.file.exported", {
             count: result.data,
           }),
         );
+      } else if (result.error === "not_a_dictionary") {
+        toast.error(t("settings.dictionary.sharing.file.exportNotDictionary"));
+      } else if (result.error === "not_json") {
+        toast.error(t("settings.dictionary.sharing.file.exportNotJson"));
       } else {
         toast.error(t("settings.dictionary.sharing.file.exportError"));
       }
@@ -233,14 +223,13 @@ const FileSetting: React.FC<{
   };
 
   const importFile = async () => {
-    const path = await open({ multiple: false, directory: false, filters });
-    if (typeof path !== "string") return;
     try {
-      const result = await commands.importDictionary(path);
+      const result = await commands.importDictionary(filterName);
       if (result.status !== "ok") {
         toast.error(t("settings.dictionary.sharing.file.importError"));
         return;
       }
+      if (result.data === null) return;
       onChange(result.data.snapshot);
       const { added, updated } = result.data.stats;
       if (added + updated === 0) {
