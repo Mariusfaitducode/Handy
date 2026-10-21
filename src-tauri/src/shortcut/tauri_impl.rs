@@ -25,6 +25,13 @@ pub fn init_shortcuts(app: &AppHandle) {
         if id == "transcribe_with_post_process" && !user_settings.post_process_enabled {
             continue;
         }
+        if (id == crate::settings::VOICE_COMMAND_BINDING_ID
+            && !user_settings.voice_commands_enabled)
+            || (id == crate::notes::VOICE_NOTE_BINDING
+                && !crate::notes::binding_enabled(&user_settings))
+        {
+            continue;
+        }
         let binding = user_settings
             .bindings
             .get(&id)

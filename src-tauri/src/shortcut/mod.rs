@@ -308,6 +308,11 @@ pub fn resume_all_shortcuts(app: &AppHandle) {
         if id == "transcribe_with_post_process" && !settings.post_process_enabled {
             continue;
         }
+        if (id == crate::settings::VOICE_COMMAND_BINDING_ID && !settings.voice_commands_enabled)
+            || (id == crate::notes::VOICE_NOTE_BINDING && !crate::notes::binding_enabled(&settings))
+        {
+            continue;
+        }
         if let Err(e) = register_shortcut(app, binding.clone()) {
             debug!("resume_all_shortcuts: could not register '{}': {}", id, e);
         }
@@ -498,6 +503,13 @@ fn register_all_shortcuts_for_implementation(
 
         // Skip post-processing shortcut when the feature is disabled
         if id == "transcribe_with_post_process" && !current_settings.post_process_enabled {
+            continue;
+        }
+        if (id == crate::settings::VOICE_COMMAND_BINDING_ID
+            && !current_settings.voice_commands_enabled)
+            || (id == crate::notes::VOICE_NOTE_BINDING
+                && !crate::notes::binding_enabled(&current_settings))
+        {
             continue;
         }
 
@@ -880,6 +892,10 @@ pub fn change_whats_new_last_seen_version_setting(
 #[tauri::command]
 #[specta::specta]
 pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
+    // The dictionary owns custom words; it mirrors them back into settings.
+    if let Some(dictionary) = crate::dictionary::manager(&app) {
+        return dictionary.set_words(&words);
+    }
     let mut settings = settings::get_settings(&app);
     settings.custom_words = words;
     settings::write_settings(&app, settings);

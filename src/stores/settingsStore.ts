@@ -9,6 +9,8 @@ import type {
   TranscribeAcceleratorSetting,
   ShortcutActivation,
   VadBackend,
+  MeetingSettings,
+  CalendarSettings,
 } from "@/bindings";
 import { commands } from "@/bindings";
 import { toast } from "sonner";
@@ -87,6 +89,22 @@ const DEFAULT_AUDIO_DEVICE: AudioDevice = {
 const settingUpdaters: {
   [K in keyof Settings]?: (value: Settings[K]) => Promise<unknown>;
 } = {
+  calendar: async (value) => {
+    const result = await commands.updateCalendarSettings(
+      value as CalendarSettings,
+    );
+    if (result.status === "error") {
+      throw new Error(result.error);
+    }
+  },
+  meeting: async (value) => {
+    const result = await commands.updateMeetingSettings(
+      value as MeetingSettings,
+    );
+    if (result.status === "error") {
+      throw new Error(result.error);
+    }
+  },
   always_on_microphone: (value) =>
     commands.updateMicrophoneMode(value as boolean),
   audio_feedback: (value) =>
@@ -163,6 +181,8 @@ const settingUpdaters: {
     commands.changePostProcessEnabledSetting(value as boolean),
   post_process_selected_prompt_id: (value) =>
     commands.setPostProcessSelectedPrompt(value as string),
+  app_styles_enabled: (value) =>
+    commands.changeAppStylesEnabledSetting(value as boolean),
   mute_while_recording: (value) =>
     commands.changeMuteWhileRecordingSetting(value as boolean),
   append_trailing_space: (value) =>
@@ -172,6 +192,8 @@ const settingUpdaters: {
   theme: (value) => commands.changeThemeSetting(value as string),
   experimental_enabled: (value) =>
     commands.changeExperimentalEnabledSetting(value as boolean),
+  voice_commands_enabled: (value) =>
+    commands.changeVoiceCommandsEnabledSetting(value as boolean),
   lazy_stream_close: (value) =>
     commands.changeLazyStreamCloseSetting(value as boolean),
   overlay_style: (value) => commands.changeOverlayStyleSetting(value as string),

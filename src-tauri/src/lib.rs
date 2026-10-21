@@ -1,20 +1,26 @@
 mod actions;
+mod app_context;
+mod app_styles;
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod apple_intelligence;
 mod audio_feedback;
 pub mod audio_toolkit;
 mod autostart;
+mod calendar;
 mod catalog;
 mod chinese_script;
 pub mod cli;
 mod clipboard;
 mod commands;
+mod dictionary;
 pub mod engine_supervisor;
 mod helpers;
 mod input;
 mod llm_client;
 mod managers;
+mod meeting;
 mod memory;
+mod notes;
 mod overlay;
 mod paste_tx;
 pub mod portable;
@@ -26,6 +32,7 @@ mod transcription_coordinator;
 mod tray;
 mod tray_i18n;
 mod utils;
+mod voice_command;
 
 pub use cli::CliArgs;
 #[cfg(debug_assertions)]
@@ -37,6 +44,7 @@ use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
 use managers::history::HistoryManager;
 use managers::model::ModelManager;
+use managers::stats::StatsManager;
 use managers::transcription::TranscriptionManager;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::Arc;
@@ -96,7 +104,7 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
-fn show_main_window(app: &AppHandle) {
+pub(crate) fn show_main_window(app: &AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
             log::error!("Failed to unminimize webview window: {}", e);
@@ -206,13 +214,39 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     );
     let history_manager =
         Arc::new(HistoryManager::new(app_handle).expect("Failed to initialize history manager"));
+    // The dictionary is optional: a failure leaves custom words in settings working.
+    match dictionary::DictionaryManager::new(app_handle) {
+        Ok(dictionary_manager) => {
+            let dictionary_manager = Arc::new(dictionary_manager);
+            dictionary_manager.start_background_sync();
+            app_handle.manage(dictionary_manager);
+        }
+        Err(e) => log::error!("Failed to initialize dictionary: {}", e),
+    }
+    let stats_manager =
+        Arc::new(StatsManager::new(app_handle).expect("Failed to initialize stats manager"));
 
     // Add managers to Tauri's managed state
     app_handle.manage(recording_manager.clone());
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    match notes::NotesManager::new(app_handle) {
+        Ok(notes_manager) => {
+            app_handle.manage(Arc::new(notes_manager));
+        }
+        // Voice notes are optional: never block startup on them.
+        Err(e) => log::error!("Failed to initialize voice notes: {e}"),
+    }
+    app_handle.manage(stats_manager.clone());
     app_handle.manage(tray::TrayState::new());
+    match meeting::MeetingManager::new(app_handle) {
+        Ok(manager) => {
+            app_handle.manage(Arc::new(manager));
+        }
+        Err(e) => log::error!("Failed to initialize meeting manager: {e}"),
+    }
+    calendar::init(app_handle);
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -311,6 +345,23 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 
                 // Use centralized cancellation that handles all operations
                 cancel_current_operation(app);
+            }
+            "meeting_start" => {
+                let app = app.clone();
+                std::thread::spawn(move || {
+                    meeting::start_meeting_reporting_errors(
+                        &app,
+                        None,
+                        meeting::MeetingSource::Tray,
+                    )
+                });
+            }
+            "meeting_stop" => meeting::stop_meeting_reporting_errors(app),
+            "meeting_pause" => {
+                let _ = meeting::pause_meeting(app);
+            }
+            "meeting_resume" => {
+                let _ = meeting::resume_meeting(app);
             }
             "quit" => {
                 app.exit(0);
@@ -676,7 +727,14 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_auto_submit_setting,
             shortcut::change_auto_submit_key_setting,
             shortcut::change_post_process_enabled_setting,
+            app_styles::get_app_styles,
+            app_styles::set_app_style,
+            app_styles::add_app_style_app,
+            app_styles::forget_app_style_app,
+            app_styles::change_app_styles_enabled_setting,
+            app_styles::list_running_apps_for_styles,
             shortcut::change_experimental_enabled_setting,
+            voice_command::change_voice_commands_enabled_setting,
             shortcut::change_post_process_base_url_setting,
             shortcut::change_post_process_api_format_setting,
             shortcut::change_post_process_api_key_setting,
@@ -767,12 +825,73 @@ pub fn run(cli_args: CliArgs) {
             commands::history::retry_history_entry_transcription,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
+            commands::history::update_history_entry_text,
+            commands::dictionary::get_dictionary,
+            commands::dictionary::add_dictionary_entry,
+            commands::dictionary::remove_dictionary_entry,
+            commands::dictionary::set_dictionary_author,
+            commands::dictionary::choose_dictionary_sync_folder,
+            commands::dictionary::stop_dictionary_sync,
+            commands::dictionary::sync_dictionary_now,
+            commands::dictionary::export_dictionary,
+            commands::dictionary::import_dictionary,
+            commands::dictionary::get_dictionary_suggestions,
+            commands::dictionary::dismiss_dictionary_suggestion,
+            commands::stats::get_usage_stats,
+            commands::stats::set_stats_typing_speed,
+            commands::stats::reset_usage_stats,
             helpers::clamshell::is_laptop,
+            meeting::commands::start_meeting,
+            meeting::commands::stop_meeting,
+            meeting::commands::pause_meeting,
+            meeting::commands::resume_meeting,
+            meeting::commands::get_meeting_status,
+            meeting::commands::list_meetings,
+            meeting::commands::get_meeting,
+            meeting::commands::rename_meeting,
+            meeting::commands::delete_meeting,
+            meeting::commands::regenerate_meeting_summary,
+            meeting::commands::get_meeting_capabilities,
+            meeting::commands::update_meeting_settings,
+            meeting::commands::open_system_audio_settings,
+            meeting::commands::get_meeting_text,
+            meeting::commands::export_meeting_markdown,
+            meeting::commands::reveal_meeting_export,
+            notes::commands::get_voice_notes,
+            notes::commands::get_voice_notes_status,
+            notes::commands::update_voice_notes_settings,
+            notes::commands::delete_voice_note,
+            notes::commands::open_voice_note,
+            notes::commands::open_voice_note_destination,
+            notes::commands::retry_voice_note_exports,
+            notes::commands::open_voice_notes_folder,
+            notes::commands::connect_notion,
+            notes::commands::disconnect_notion,
+            notes::commands::check_apple_notes_access,
+            notes::commands::open_voice_notes_privacy_settings,
+            calendar::commands::get_calendar_overview,
+            calendar::commands::enable_calendar,
+            calendar::commands::request_calendar_notifications,
+            calendar::commands::list_calendars,
+            calendar::commands::update_calendar_settings,
+            calendar::commands::set_calendar_event_choice,
+            calendar::commands::answer_calendar_prompt,
+            calendar::commands::open_calendar_system_settings,
+            calendar::commands::open_meeting_link,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,
             managers::transcription::StreamTextEvent,
             managers::transcription::StreamPhaseEvent,
+            meeting::MeetingStatusEvent,
+            meeting::MeetingSegmentEvent,
+            meeting::MeetingSegmentRemovedEvent,
+            meeting::MeetingUpdatedEvent,
+            meeting::MeetingErrorEvent,
+            dictionary::DictionaryChangedEvent,
+            notes::VoiceNotesChanged,
+            calendar::CalendarChangedEvent,
+            calendar::CalendarPromptEvent,
         ]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
@@ -860,6 +979,8 @@ pub fn run(cli_args: CliArgs) {
                 signal_handle::send_transcription_input(app, "transcribe_with_post_process", "CLI");
             } else if args.iter().any(|a| a == "--cancel") {
                 crate::utils::cancel_current_operation(app);
+            } else if let Some((action, title)) = meeting::parse_cli_args(&args) {
+                meeting::run_cli_action(app, action, title);
             } else {
                 // A second process was launched without remote-control flags
                 // (e.g. the binary run from a shell). On macOS, relaunching the
@@ -1010,6 +1131,17 @@ pub fn run(cli_args: CliArgs) {
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
 
             initialize_core_logic(&app_handle);
+
+            // A meeting flag on the first launch (e.g. a script that opens
+            // Handy and starts recording) is honored once everything is up.
+            if cli_args.toggle_meeting || cli_args.start_meeting {
+                let action = if cli_args.start_meeting {
+                    meeting::CliMeetingAction::Start
+                } else {
+                    meeting::CliMeetingAction::Toggle
+                };
+                meeting::run_cli_action(&app_handle, action, cli_args.meeting_title.clone());
+            }
 
             // Secure Input monitor (macOS): detects stuck secure input that
             // silently blocks keyed shortcuts, warns the user, and activates

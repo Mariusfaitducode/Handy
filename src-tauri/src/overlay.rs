@@ -2,7 +2,7 @@ use crate::input;
 use crate::settings;
 use crate::settings::{OverlayPosition, OverlayStyle};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
 #[cfg(not(target_os = "macos"))]
@@ -54,8 +54,13 @@ const OVERLAY_STREAM_WIDTH: f64 = 400.0;
 const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
 
 /// Overlay window size (logical) for a given UI state.
+/// The Live panel, for dictation or for a voice note.
+fn is_streaming_state(state: &str) -> bool {
+    state == "streaming" || state == "note_streaming"
+}
+
 fn overlay_dimensions(state: &str) -> (f64, f64) {
-    if state == "streaming" {
+    if is_streaming_state(state) {
         (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT)
     } else {
         (OVERLAY_WIDTH, OVERLAY_HEIGHT)
@@ -485,7 +490,7 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     }
 }
 
-fn show_overlay_state(app_handle: &AppHandle, state: &str) {
+pub(crate) fn show_overlay_state(app_handle: &AppHandle, state: &str) {
     // Whether the overlay shows at all is governed by overlay_style; position
     // only chooses Top vs Bottom placement. Checked here (off the main thread)
     // so the common overlay-disabled case never pays for a main-thread hop.
@@ -538,7 +543,7 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
             let _ =
                 overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
             #[cfg(target_os = "windows")]
-            WINDOWS_OVERLAY_IS_STREAMING.store(state == "streaming", Ordering::Relaxed);
+            WINDOWS_OVERLAY_IS_STREAMING.store(is_streaming_state(state), Ordering::Relaxed);
             let size_elapsed = size_started.elapsed();
 
             let pos_started = std::time::Instant::now();
@@ -610,6 +615,15 @@ pub fn emit_recording_ready(app_handle: &AppHandle) {
     });
 }
 
+/// Tells the overlay which app style (prompt name) is polishing the current
+/// dictation, or `None` for the default prompt. Shown in the working label.
+pub fn emit_overlay_style(app_handle: &AppHandle, style: Option<String>) {
+    if !OVERLAY_ENABLED.load(Ordering::Relaxed) {
+        return;
+    }
+    let _ = app_handle.emit_to("recording_overlay", "overlay-style", style);
+}
+
 /// Shows the recording overlay window with fade-in animation
 pub fn show_recording_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "recording");
@@ -618,6 +632,36 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
 /// Shows the larger streaming overlay that displays live transcription text
 pub fn show_streaming_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "streaming");
+}
+
+/// Compact recording pill for a voice note (marked so the user knows the
+/// text will be saved, not pasted).
+pub fn show_note_recording_overlay(app_handle: &AppHandle) {
+    show_overlay_state(app_handle, "note_recording");
+}
+
+/// Live panel for a voice note.
+pub fn show_note_streaming_overlay(app_handle: &AppHandle) {
+    show_overlay_state(app_handle, "note_streaming");
+}
+
+/// Show a short-lived confirmation state (e.g. "note_saved"), then hide the
+/// overlay — unless another session showed it in the meantime.
+pub fn flash_overlay_state(app_handle: &AppHandle, state: &'static str, duration: Duration) {
+    if settings::get_settings(app_handle).overlay_style == OverlayStyle::None {
+        return;
+    }
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        show_overlay_state_on_main(&handle, state);
+        let shown = OVERLAY_SHOW_GENERATION.load(Ordering::SeqCst);
+        std::thread::spawn(move || {
+            std::thread::sleep(duration);
+            if OVERLAY_SHOW_GENERATION.load(Ordering::SeqCst) == shown {
+                hide_recording_overlay(&handle);
+            }
+        });
+    });
 }
 
 /// Shows the transcribing overlay window

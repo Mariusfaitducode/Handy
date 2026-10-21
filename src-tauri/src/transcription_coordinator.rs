@@ -535,7 +535,10 @@ pub struct TranscriptionCoordinator {
 }
 
 pub fn is_transcribe_binding(id: &str) -> bool {
-    id == "transcribe" || id == "transcribe_with_post_process"
+    id == "transcribe"
+        || id == "transcribe_with_post_process"
+        || id == crate::settings::VOICE_COMMAND_BINDING_ID
+        || id == crate::notes::VOICE_NOTE_BINDING
 }
 
 impl TranscriptionCoordinator {

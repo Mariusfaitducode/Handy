@@ -7,7 +7,11 @@
     "model": "Modèle",
     "quit": "Quitter",
     "cancel": "Annuler",
-    "secureInputWarning": "⚠ Raccourcis bloqués par Secure Input"
+    "secureInputWarning": "⚠ Raccourcis bloqués par Secure Input",
+    "startMeeting": "Enregistrer une réunion",
+    "stopMeeting": "Arrêter la réunion",
+    "pauseMeeting": "Mettre la réunion en pause",
+    "resumeMeeting": "Reprendre la réunion"
   },
   "sidebar": {
     "general": "Général",
@@ -15,8 +19,13 @@
     "advanced": "Avancé",
     "postProcessing": "Post-traitement",
     "history": "Historique",
+    "stats": "Statistiques",
     "debug": "Débogage",
-    "about": "À propos"
+    "about": "À propos",
+    "meetings": "Réunions",
+    "voiceCommands": "Commandes",
+    "dictionary": "Dictionnaire",
+    "notes": "Notes"
   },
   "onboarding": {
     "subtitle": "Pour commencer, choisissez un modèle de transcription",
@@ -171,6 +180,18 @@
           "transcribe_with_post_process": {
             "name": "Raccourci de post-traitement",
             "description": "Facultatif : Un raccourci dédié qui applique toujours le post-traitement IA à votre transcription."
+          },
+          "toggle_meeting": {
+            "name": "Raccourci de réunion",
+            "description": "Démarre l'enregistrement d'une réunion, ou arrête celle en cours."
+          },
+          "voice_command": {
+            "name": "Raccourci des commandes",
+            "description": "Maintenez ce raccourci et dites une instruction à appliquer au texte sélectionné."
+          },
+          "voice_note": {
+            "name": "Raccourci note vocale",
+            "description": "Enregistre une pensée et la range dans vos notes au lieu de la taper."
           }
         },
         "errors": {
@@ -442,6 +463,22 @@
         "cancel": "Annuler",
         "selectToEdit": "Sélectionnez un prompt ci-dessus pour voir et modifier ses détails.",
         "createFirst": "Cliquez sur 'Créer un nouveau prompt' ci-dessus pour créer votre premier prompt de post-traitement."
+      },
+      "appStyles": {
+        "title": "Style selon l'app",
+        "description": "Handy adapte le style d'écriture à l'app dans laquelle vous dictez. L'app n'est consultée que lorsque vous utilisez le raccourci de post-traitement : aucun coût sinon.",
+        "enabled": {
+          "label": "Adapter le style à l'app",
+          "description": "Formel dans Mail et Gmail, décontracté dans Slack, WhatsApp et Messages, précis dans le Terminal, les éditeurs de code et Claude. Les autres apps utilisent votre prompt sélectionné."
+        },
+        "empty": "Les apps dans lesquelles vous dictez avec le post-traitement apparaîtront ici. Mail, Slack, Messages, Terminal, VS Code, Gmail et bien d'autres ont déjà un style suggéré.",
+        "defaultOption": "Prompt par défaut ({{name}})",
+        "defaultOptionNone": "Prompt par défaut (aucun)",
+        "suggested": "Suggéré pour cette app",
+        "website": "Site web",
+        "addApp": "Ajouter une app ouverte…",
+        "hint": "Les styles sont les prompts ci-dessus : modifiez-les ou créez le vôtre.",
+        "forget": "Retirer {{name}} de la liste"
       }
     },
     "history": {
@@ -458,7 +495,97 @@
       "retranscribe": "Re-transcrire",
       "retranscribeError": "Impossible de re-transcrire. Veuillez réessayer.",
       "transcribing": "Transcription en cours...",
-      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai."
+      "transcriptionFailed": "La transcription a échoué. Vous pouvez re-transcrire en utilisant l'icône de réessai.",
+      "command": {
+        "badge": "Commande",
+        "retry": "Relancer la commande",
+        "instruction": "« {{instruction}} »",
+        "noResult": "Aucun résultat. Relancez la commande avec l’icône de réessai.",
+        "original": "Texte d’origine"
+      },
+      "edit": "Corriger la transcription",
+      "editSave": "Enregistrer",
+      "editCancel": "Annuler",
+      "editHint": "{{shortcut}} pour enregistrer · Échap pour annuler",
+      "editError": "Impossible d'enregistrer la correction.",
+      "learn": {
+        "title": "Retenir cette correction ?",
+        "add": "Ajouter",
+        "added": "Ajouté",
+        "dismiss": "Non merci"
+      }
+    },
+    "stats": {
+      "title": "Statistiques",
+      "loading": "Chargement des statistiques…",
+      "error": "Impossible de charger vos statistiques.",
+      "retry": "Réessayer",
+      "empty": {
+        "title": "Pas encore de statistiques",
+        "description": "Dictez votre premier texte avec votre raccourci : les mots, le temps gagné et votre série s'afficheront ici."
+      },
+      "hero": {
+        "words_one": "mot dicté",
+        "words_other": "mots dictés",
+        "timeSaved": "Temps gagné : environ {{duration}}, par rapport à une frappe à {{wpm}} mots/min",
+        "noTimeSaved": "Continuez à dicter pour voir le temps que vous gagnez."
+      },
+      "tiles": {
+        "today": "Aujourd'hui",
+        "week": "7 derniers jours",
+        "streak": "Série",
+        "pace": "Vitesse de parole",
+        "streakValue_one": "{{count}} jour",
+        "streakValue_other": "{{count}} jours",
+        "streakBest": "Record : {{count}}",
+        "paceUnit": "mots/min",
+        "unknown": "—",
+        "paceUnknownHint": "Après quelques dictées"
+      },
+      "chart": {
+        "title": "30 derniers jours",
+        "start": "Il y a 30 jours",
+        "today": "Aujourd'hui",
+        "tooltip_one": "{{date}} · {{formatted}} mot",
+        "tooltip_other": "{{date}} · {{formatted}} mots",
+        "noWords": "{{date}} · aucune dictée"
+      },
+      "apps": {
+        "title": "Applications",
+        "empty": "Les applications seront suivies dès votre prochaine dictée."
+      },
+      "languages": {
+        "title": "Langues",
+        "empty": "Pas encore assez de texte pour détecter une langue."
+      },
+      "settings": {
+        "title": "Réglages",
+        "typingSpeed": {
+          "title": "Votre vitesse de frappe",
+          "description": "Sert à estimer le temps gagné. 40 mots/min correspond à la moyenne au clavier.",
+          "unit": "mots/min"
+        },
+        "reset": {
+          "title": "Réinitialiser les statistiques",
+          "description": "Efface toutes les statistiques de cet appareil. Votre historique n'est pas touché.",
+          "button": "Réinitialiser",
+          "dialogTitle": "Réinitialiser les statistiques ?",
+          "dialogBody": "Les mots, les séries et le temps gagné repartiront de zéro. Cette action est irréversible.",
+          "confirm": "Réinitialiser",
+          "cancel": "Annuler",
+          "error": "Impossible de réinitialiser les statistiques."
+        }
+      },
+      "footer": {
+        "privacy": "Calculées sur cet appareil. Aucun texte n'est conservé dans les statistiques.",
+        "since": "Depuis le {{date}}"
+      },
+      "duration": {
+        "lessThanMinute": "moins d'une minute",
+        "minutes": "{{minutes}} min",
+        "hours": "{{hours}} h",
+        "hoursMinutes": "{{hours}} h {{minutes}} min"
+      }
     },
     "debug": {
       "title": "Débogage",
@@ -626,6 +753,116 @@
         "label": "Afficher les nouveautés",
         "description": "Afficher les notes de version après les mises à jour de Handy"
       }
+    },
+    "voiceCommands": {
+      "title": "Commandes vocales",
+      "enable": {
+        "label": "Activer les commandes vocales",
+        "description": "Sélectionnez du texte, maintenez le raccourci et dites quoi en faire. Sans sélection, Handy rédige le texte à l’emplacement du curseur."
+      },
+      "model": {
+        "title": "Modèle IA",
+        "description": "Partagé avec le post-traitement : les commandes utilisent ce fournisseur et ce modèle.",
+        "missing": "Choisissez un fournisseur, un modèle et une clé API pour utiliser les commandes vocales."
+      },
+      "howTo": {
+        "title": "Comment ça marche",
+        "select": "Sélectionnez du texte dans n’importe quelle app — ou rien, pour rédiger un nouveau texte.",
+        "hold": "Maintenez {{shortcut}} et dites ce que vous voulez.",
+        "release": "Relâchez : le résultat remplace la sélection. Échap pour interrompre ; l’original reste dans l’historique.",
+        "privacy": "La sélection et votre instruction sont envoyées au fournisseur IA choisi. Les champs sécurisés, comme les mots de passe, ne sont jamais lus."
+      },
+      "examples": {
+        "title": "Essayez",
+        "list": "« Mets ça en liste à puces »",
+        "translate": "« Traduis en anglais »",
+        "polite": "« Rends ça plus poli »",
+        "summarize": "« Résume en deux phrases »",
+        "email": "« Écris un mail pour décaler la réunion à vendredi »"
+      }
+    },
+    "dictionary": {
+      "title": "Dictionnaire",
+      "description": "Les noms et termes que Handy doit connaître, et les corrections de ce qu'il entend mal.",
+      "add": {
+        "heardPlaceholder": "Mot ou nom",
+        "heardPlaceholderReplacement": "Entendu, ex. Andy",
+        "writtenPlaceholder": "Écrire à la place (facultatif)",
+        "button": "Ajouter",
+        "becomes": "devient",
+        "hint": "Laissez le second champ vide pour apprendre un mot. Remplissez-le pour corriger une erreur d'écoute, par exemple « Andy » → « Handy ».",
+        "added": "« {{term}} » ajouté au dictionnaire"
+      },
+      "errors": {
+        "empty": "Saisissez d'abord un mot.",
+        "too_long": "50 caractères maximum.",
+        "duplicate": "« {{term}} » est déjà dans votre dictionnaire.",
+        "generic": "Impossible de modifier le dictionnaire. Veuillez réessayer."
+      },
+      "filterPlaceholder": "Rechercher parmi {{count}} entrées",
+      "noMatch": "Aucune entrée ne correspond à « {{query}} ».",
+      "empty": {
+        "title": "Votre dictionnaire est vide",
+        "body": "Ajoutez les noms, marques et termes que vous employez. Astuce : corrigez une dictée dans l'Historique et Handy vous proposera de retenir la correction."
+      },
+      "entry": {
+        "remove": "Retirer {{term}}",
+        "addedBy": "Ajouté par {{name}} le {{date}}",
+        "addedOn": "Ajouté le {{date}}",
+        "removed": "« {{term}} » retiré",
+        "undo": "Annuler"
+      },
+      "suggestions": {
+        "title": "Suggestions",
+        "description": "Les noms qui reviennent souvent dans vos dictées.",
+        "seen_one": "vu {{count}} fois",
+        "seen_other": "vu {{count}} fois",
+        "add": "Ajouter",
+        "dismiss": "Ignorer",
+        "dismissLabel": "Ignorer {{term}}"
+      },
+      "sharing": {
+        "title": "Partage",
+        "description": "Partagez votre dictionnaire avec un proche grâce à un dossier commun ou un fichier.",
+        "author": {
+          "title": "Votre nom",
+          "description": "Affiché à côté des mots que vous ajoutez, chez les personnes avec qui vous partagez.",
+          "placeholder": "Prénom"
+        },
+        "folder": {
+          "title": "Dossier partagé",
+          "description": "Choisissez le même dossier sur chaque Mac, par exemple un dossier iCloud Drive ou Dropbox partagé. Handy synchronise chaque minute et fusionne les deux côtés : aucun mot n'est perdu.",
+          "choose": "Choisir un dossier…",
+          "dialogTitle": "Choisissez le dossier par lequel partager votre dictionnaire",
+          "stop": "Arrêter",
+          "syncNow": "Synchroniser",
+          "syncing": "Synchronisation…",
+          "never": "Pas encore synchronisé",
+          "lastSync": "Synchronisé {{time}}",
+          "stopped": "Synchronisation arrêtée. Vos mots restent sur ce Mac."
+        },
+        "syncErrors": {
+          "folder_missing": "Dossier introuvable. Le disque est-il connecté ?",
+          "not_downloaded": "iCloud n'a pas encore téléchargé le fichier partagé sur ce Mac. Ouvrez le dossier dans le Finder pour le récupérer.",
+          "unreadable": "Le fichier partagé est illisible ; il n'a pas été modifié.",
+          "write_failed": "Impossible d'écrire dans le dossier partagé. Vérifiez qu'il est accessible en écriture."
+        },
+        "file": {
+          "title": "Fichier",
+          "description": "Envoyez votre dictionnaire par AirDrop ou e-mail. L'import ajoute des mots, il n'en supprime jamais.",
+          "export": "Exporter…",
+          "import": "Importer…",
+          "filterName": "Dictionnaire Handy",
+          "exported_one": "{{count}} entrée exportée",
+          "exported_other": "{{count}} entrées exportées",
+          "imported": "Import terminé : {{added}} ajoutée(s), {{updated}} mise(s) à jour",
+          "importedNothing": "Rien de nouveau dans ce fichier.",
+          "exportError": "Impossible d'exporter le dictionnaire.",
+          "importError": "Ce fichier n'est pas un dictionnaire Handy.",
+          "exportNotDictionary": "Ce fichier existe déjà et n'est pas un dictionnaire Handy : il n'a pas été remplacé.",
+          "exportNotJson": "Le dictionnaire doit être enregistré dans un fichier .json."
+        }
+      }
     }
   },
   "footer": {
@@ -691,7 +928,28 @@
   "overlay": {
     "transcribing": "Transcription...",
     "processing": "Traitement...",
-    "loadingModel": "Chargement du modèle..."
+    "processingStyle": "Style : {{style}}",
+    "loadingModel": "Chargement du modèle...",
+    "command": {
+      "thinking": "Réflexion...",
+      "done": {
+        "replaced": "Sélection remplacée",
+        "inserted": "Texte inséré",
+        "copied": "Copié dans le presse-papiers",
+        "copied_terminal": "Résultat copié — collez avec ⌘V"
+      },
+      "errors": {
+        "no_llm": "Configurez un modèle IA",
+        "secure_input": "Saisie sécurisée active",
+        "no_instruction": "Aucune instruction entendue",
+        "selection_too_long": "Sélection trop longue",
+        "transcription_failed": "Transcription impossible",
+        "llm_failed": "Le modèle IA n’a pas répondu",
+        "paste_failed": "Collage impossible — copié"
+      }
+    },
+    "noteSaved": "Note enregistrée",
+    "noteFailed": "Note non enregistrée"
   },
   "whatsNew": {
     "title": "Nouveautés de Handy v{{version}}"
@@ -706,5 +964,350 @@
     "learnMore": "Comment résoudre ce problème",
     "recorderBlocked": "Impossible d'enregistrer un raccourci pour le moment : Secure Input de macOS bloque les événements clavier. Résolvez d'abord l'avertissement Secure Input.",
     "dismiss": "Ignorer"
+  },
+  "meetings": {
+    "title": "Réunions",
+    "privacy": "L'audio est transcrit sur ce Mac et n'est jamais enregistré. Seul le texte est conservé.",
+    "start": {
+      "titlePlaceholder": "Nom de la réunion (facultatif)",
+      "button": "Démarrer l'enregistrement",
+      "starting": "Démarrage…",
+      "hint": "Enregistre votre voix et le son de votre Mac : tous les participants de l'appel sont transcrits.",
+      "hintMicOnly": "Enregistre votre micro. Capter les autres participants nécessite macOS 14.2 ou plus récent.",
+      "shortcut": "Raccourci : {{shortcut}}"
+    },
+    "live": {
+      "recording": "Enregistrement",
+      "paused": "En pause",
+      "finishing": "Transcription des dernières phrases…",
+      "finishingCount_one": "Transcription de la dernière phrase…",
+      "finishingCount_other": "Transcription des {{count}} dernières phrases…",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "stop": "Arrêter",
+      "showTranscript": "Voir la transcription",
+      "untitled": "Réunion en cours"
+    },
+    "systemAudio": {
+      "denied": "Handy n'entend pas les autres participants : l'enregistrement du son du système a été refusé. Seul votre micro est transcrit.",
+      "unsupported": "Seul votre micro est transcrit : capter les autres participants nécessite macOS 14.2 ou plus récent.",
+      "failed": "Le son de votre Mac n'a pas pu être capté. Seul votre micro est transcrit.",
+      "openSettings": "Ouvrir les Réglages Système",
+      "promptHint": "La première fois, macOS demande d'autoriser Handy à enregistrer le son du système. Acceptez pour que les autres participants soient transcrits."
+    },
+    "list": {
+      "emptyTitle": "Aucune réunion pour l'instant",
+      "emptyBody": "Lancez l'enregistrement au début de votre appel. Handy transcrit tout le monde au fil de la discussion et rédige le compte rendu quand vous arrêtez.",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "untitled": "Réunion du {{date}}",
+      "status": {
+        "recording": "En cours",
+        "processing": "Transcription",
+        "summarizing": "Rédaction",
+        "summary": "Compte rendu",
+        "transcript": "Transcription seule",
+        "interrupted": "Interrompue",
+        "failed": "Compte rendu en échec"
+      },
+      "loadError": "Impossible de charger vos réunions."
+    },
+    "detail": {
+      "back": "Réunions",
+      "rename": "Renommer",
+      "renamePlaceholder": "Nom de la réunion",
+      "tabs": {
+        "summary": "Compte rendu",
+        "transcript": "Transcription"
+      },
+      "speakers": {
+        "me": "Moi",
+        "others": "Participants"
+      },
+      "copySummary": "Copier le compte rendu",
+      "copyTranscript": "Copier la transcription",
+      "copied": "Copié",
+      "copyError": "Impossible de copier dans le presse-papiers",
+      "export": "Exporter en Markdown",
+      "exported": "Enregistré dans {{folder}}",
+      "reveal": "Afficher dans le Finder",
+      "chooseFolder": "Choisissez où enregistrer vos réunions",
+      "delete": "Supprimer",
+      "deleteConfirm": "Supprimer cette réunion ?",
+      "deleteConfirmBody": "Sa transcription et son compte rendu seront effacés de ce Mac. Cette action est définitive.",
+      "cancel": "Annuler",
+      "notFound": "Cette réunion n'existe plus.",
+      "transcriptEmpty": "Rien n'a été transcrit.",
+      "transcriptWaiting": "À l'écoute… Les premières phrases s'affichent ici quelques secondes après avoir été prononcées.",
+      "micOnly": "Micro seul",
+      "withSystemAudio": "Micro et son du Mac",
+      "interrupted": "Handy s'est arrêté pendant cette réunion. La transcription est conservée jusqu'à ce moment."
+    },
+    "summary": {
+      "pending": "Rédaction du compte rendu…",
+      "inProgress": "Le compte rendu sera rédigé à la fin de la réunion.",
+      "writtenBy": "Rédigé par {{model}}",
+      "regenerate": "Réécrire",
+      "generate": "Rédiger le compte rendu",
+      "retry": "Réessayer",
+      "failed": "Le compte rendu n'a pas pu être rédigé.",
+      "empty": "Trop peu de choses ont été dites pour rédiger un compte rendu.",
+      "none": "Pas encore de compte rendu pour cette réunion.",
+      "notConfiguredTitle": "Le compte rendu nécessite un modèle de langage",
+      "notConfiguredBody": "La transcription est enregistrée. Pour obtenir un résumé, les décisions et les actions, activez le post-traitement dans Avancé, puis choisissez un fournisseur (OpenAI, Anthropic, un modèle local avec Ollama, Apple Intelligence…) dans Post-traitement.",
+      "openSettings": "Ouvrir les réglages"
+    },
+    "settings": {
+      "title": "Réglages des réunions",
+      "autoSummary": {
+        "label": "Rédiger le compte rendu automatiquement",
+        "description": "À la fin d'une réunion, sa transcription est envoyée à votre modèle de post-traitement pour en tirer un résumé, les décisions et les actions.",
+        "using": "Utilise {{model}}. La transcription est envoyée là, et nulle part ailleurs.",
+        "notConfigured": "Aucun modèle de langage n'est configuré : les réunions gardent seulement leur transcription."
+      },
+      "exportDir": {
+        "label": "Dossier d'export",
+        "description": "Où les réunions sont enregistrées en fichiers Markdown, par exemple le dossier de votre app de notes.",
+        "choose": "Choisir…",
+        "none": "Non défini"
+      },
+      "autoExport": {
+        "label": "Exporter chaque réunion",
+        "description": "Enregistre chaque réunion terminée, avec son compte rendu, en fichier Markdown dans le dossier d'export."
+      },
+      "retention": {
+        "label": "Conserver les réunions",
+        "description": "Les réunions plus anciennes sont effacées automatiquement de ce Mac.",
+        "forever": "Toujours",
+        "days_30": "30 jours",
+        "days_90": "90 jours",
+        "year": "1 an",
+        "confirmTitle": "Supprimer les réunions plus anciennes ?",
+        "confirmBody": "Les réunions de plus de {{period}} seront supprimées de ce Mac dès maintenant, puis automatiquement."
+      },
+      "indicator": {
+        "label": "Indicateur d'enregistrement flottant",
+        "description": "Une petite pastille en haut à droite de l'écran, avec la durée, la pause et l'arrêt. Désactivez-la si elle gêne vos partages d'écran."
+      }
+    },
+    "errors": {
+      "no_model": "Téléchargez d'abord un modèle de transcription, dans Modèles.",
+      "microphone_permission_denied": "Handy n'a pas accès au micro. Autorisez-le dans Réglages Système › Confidentialité et sécurité › Microphone.",
+      "no_input_device": "Aucun micro n'a été trouvé.",
+      "already_recording": "Une réunion est déjà en cours d'enregistrement.",
+      "still_finishing": "La réunion précédente est encore en cours de transcription. Réessayez dans un instant.",
+      "not_recording": "Aucune réunion n'est en cours d'enregistrement.",
+      "meeting_in_progress": "Cette réunion est encore en cours.",
+      "export_dir_missing": "Le dossier d'export n'existe plus. Choisissez-en un autre.",
+      "generic": "Une erreur est survenue : {{detail}}"
+    },
+    "indicator": {
+      "recording": "Réunion en cours d'enregistrement",
+      "paused": "Réunion en pause",
+      "open": "Ouvrir dans Handy",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "stop": "Arrêter et rédiger le compte rendu"
+    },
+    "calendar": {
+      "title": "Prochaines réunions",
+      "connect": {
+        "body": "Handy peut vous proposer d'enregistrer vos visios une minute avant qu'elles commencent, à partir de votre Calendrier (iCloud, Google, Exchange…). Handy se contente de le lire.",
+        "button": "Connecter le calendrier",
+        "connecting": "Connexion…"
+      },
+      "denied": "Handy n'a pas accès à votre calendrier et ne peut donc pas vous proposer d'enregistrer vos appels.",
+      "openSettings": "Ouvrir les Réglages Système",
+      "error": "Un problème est survenu avec le calendrier. Réessayez.",
+      "notifications": {
+        "denied": "Les notifications de Handy sont désactivées : vous ne verrez pas les propositions d'enregistrement.",
+        "notDetermined": "Autorisez les notifications pour que Handy vous propose d'enregistrer une minute avant chaque appel.",
+        "allow": "Autoriser les notifications",
+        "unavailable": "Les propositions d'enregistrement s'afficheront dans cette fenêtre (les notifications nécessitent l'app installée)."
+      },
+      "empty": "Aucune visio prévue d'ici demain soir.",
+      "now": "En cours",
+      "tomorrow": "Demain",
+      "untitled": "Sans titre",
+      "with": "Avec {{names}}",
+      "withMany": "Avec {{names}} et {{count}} autres",
+      "status": {
+        "ask": "Proposée 1 min avant",
+        "auto": "Enregistrée automatiquement",
+        "recording": "Enregistrement",
+        "skipped": "Ignorée",
+        "noAttendees": "Sans invités"
+      },
+      "skip": "Ignorer",
+      "restore": "Annuler",
+      "record": "Enregistrer",
+      "join": "Rejoindre",
+      "prompt": {
+        "soonTitle": "Réunion « {{title}} » dans 1 min",
+        "soonBody": "Enregistrer et transcrire cette réunion ?",
+        "autoBody": "L'enregistrement démarrera automatiquement.",
+        "endedTitle": "« {{title}} » semble terminée",
+        "endedBody": "Plus personne ne parle depuis quelques minutes. Arrêter l'enregistrement ?",
+        "record": "Enregistrer",
+        "ignore": "Ignorer",
+        "dontRecord": "Ne pas enregistrer",
+        "stop": "Arrêter",
+        "keep": "Continuer"
+      },
+      "settings": {
+        "title": "Calendrier",
+        "mode": {
+          "label": "Réunions du calendrier",
+          "description": "Ce que fait Handy une minute avant une visio de votre calendrier. Après l'heure de fin prévue, quand plus personne ne parle depuis quelques minutes, Handy propose d'arrêter.",
+          "ask": "Demander",
+          "auto": "Enregistrer automatiquement",
+          "off": "Désactivé"
+        },
+        "onlyVideo": {
+          "label": "Visios uniquement",
+          "description": "Seulement les événements avec un lien Google Meet, Zoom, Teams, Webex ou FaceTime (dans le lieu, les notes ou l'URL)."
+        },
+        "skipAlone": {
+          "label": "Ignorer les événements sans invités",
+          "description": "Écarte les événements où vous êtes seul invité, comme les plages de concentration avec un lien."
+        },
+        "calendars": {
+          "label": "Calendriers suivis",
+          "description": "Seuls les événements de ces calendriers sont proposés. Les nouveaux calendriers sont suivis.",
+          "none": "Aucun calendrier trouvé. Ajoutez vos comptes dans l'app Calendrier."
+        }
+      }
+    }
+  },
+  "notes": {
+    "title": "Notes",
+    "searchPlaceholder": "Rechercher dans les notes",
+    "clearSearch": "Effacer la recherche",
+    "settingsButton": "Réglages des notes",
+    "back": "Retour aux notes",
+    "loading": "Chargement des notes…",
+    "loadError": "Impossible de charger vos notes.",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "count_one": "{{count}} note",
+    "count_other": "{{count}} notes",
+    "noResults": "Aucune note ne correspond à « {{query}} ».",
+    "empty": {
+      "title": "Aucune note pour l'instant",
+      "description": "Appuyez sur {{shortcut}}, dites ce qui vous passe par la tête : la note arrive ici. Rien n'est tapé dans l'app que vous utilisez."
+    },
+    "disabled": {
+      "title": "Les notes vocales sont désactivées",
+      "description": "Activez-les pour noter une idée avec un raccourci dédié, sans rien taper nulle part.",
+      "enable": "Activer"
+    },
+    "row": {
+      "expand": "Afficher la note complète",
+      "collapse": "Réduire",
+      "aiProcessed": "Titre et nettoyage par l'IA",
+      "showOriginal": "Voir ce que vous avez dit",
+      "hideOriginal": "Masquer ce que vous avez dit",
+      "exportProblem": "Une destination n'a pas pu être mise à jour"
+    },
+    "actions": {
+      "copy": "Copier",
+      "open": "Ouvrir",
+      "delete": "Supprimer",
+      "retry": "Réessayer"
+    },
+    "toasts": {
+      "deleted": "Note supprimée",
+      "undo": "Annuler",
+      "deleteLeftUntouched": "Note supprimée de Handy. Son fichier journal a été modifié à la main : il a été laissé tel quel.",
+      "deleteError": "Impossible de supprimer la note.",
+      "openError": "Impossible d'ouvrir la note.",
+      "copyError": "Impossible de copier la note.",
+      "retryError": "Impossible de réessayer.",
+      "saveError": "Impossible d'enregistrer le réglage."
+    },
+    "destinations": {
+      "markdown": "Markdown",
+      "notion": "Notion",
+      "apple_notes": "Apple Notes",
+      "pending": "{{name}} : envoi…",
+      "done": "{{name}} : ouvrir",
+      "failed": "{{name}} : échec"
+    },
+    "errors": {
+      "permission_denied": "Handy ne peut pas écrire dans ce dossier. Autorisez l'accès dans Réglages Système › Confidentialité et sécurité › Fichiers et dossiers.",
+      "io": "La note n'a pas pu être écrite dans le dossier.",
+      "notion_invalid_token": "Notion a refusé le jeton. Vérifiez-le dans les réglages de votre intégration.",
+      "notion_page_not_found": "Notion ne voit pas cette page. Ouvrez-la dans Notion, puis ••• › Connexions › ajoutez votre intégration.",
+      "notion_invalid_page_link": "Ce lien ne ressemble pas à une page Notion.",
+      "notion_network": "Impossible de joindre Notion. Vérifiez votre connexion.",
+      "notion_api": "Notion a renvoyé une erreur.",
+      "notion_token_missing": "Notion n'est plus connecté. Reconnectez-le dans les réglages des notes.",
+      "notion_keychain": "Impossible d'enregistrer le jeton de façon sécurisée.",
+      "apple_notes_denied": "Handy n'est pas autorisé à contrôler Notes. Autorisez-le dans Réglages Système › Confidentialité et sécurité › Automatisation.",
+      "apple_notes_failed": "Apple Notes a renvoyé une erreur.",
+      "generic": "Une erreur est survenue."
+    },
+    "settings": {
+      "title": "Réglages des notes",
+      "capture": {
+        "title": "Capture",
+        "enabled": {
+          "label": "Notes vocales",
+          "description": "Un raccourci dédié qui range ce que vous dites dans vos notes au lieu de le taper."
+        },
+        "ai": {
+          "label": "Titre et nettoyage par l'IA",
+          "description": "Donne un titre à chaque note et retire les hésitations, avec votre fournisseur de post-traitement. Vos mots et votre langue sont conservés.",
+          "using": "Utilise {{provider}}.",
+          "unavailableDisabled": "Activez le post-traitement (Avancé › Expérimental) et choisissez un fournisseur pour l'utiliser. En attendant, le titre reprend vos premiers mots.",
+          "unavailableNoProvider": "Choisissez un fournisseur, un modèle et une clé API dans Post-traitement pour l'utiliser. En attendant, le titre reprend vos premiers mots."
+        }
+      },
+      "markdown": {
+        "title": "Dossier Markdown",
+        "enabled": {
+          "label": "Enregistrer dans un dossier",
+          "description": "Des fichiers Markdown à ouvrir dans Obsidian, iA Writer ou n'importe quel éditeur."
+        },
+        "folder": {
+          "label": "Dossier",
+          "description": "Où les notes sont écrites. Par défaut : Documents › Handy Notes.",
+          "choose": "Choisir…",
+          "reset": "Par défaut",
+          "open": "Ouvrir"
+        },
+        "layout": {
+          "label": "Fichiers",
+          "description": "Un fichier journal par jour avec une section par note, ou un fichier par note.",
+          "daily": "Un par jour",
+          "per_note": "Un par note"
+        }
+      },
+      "notion": {
+        "title": "Notion",
+        "description": "Chaque note devient une page, rangée sous la page de votre choix.",
+        "token": {
+          "label": "Jeton d'intégration",
+          "placeholder": "ntn_…",
+          "help": "Créez une intégration interne sur notion.so/profile/integrations, copiez son jeton, puis ajoutez l'intégration à la page parente (••• › Connexions)."
+        },
+        "page": {
+          "label": "Page parente",
+          "placeholder": "Collez le lien de la page"
+        },
+        "connect": "Connecter",
+        "connecting": "Vérification…",
+        "connected": "Les notes vont dans « {{page}} ».",
+        "connectedUntitled": "Connecté.",
+        "disconnect": "Déconnecter",
+        "keychain": "Le jeton est gardé dans votre trousseau (ou un fichier lisible par vous seul), jamais dans le fichier de réglages de Handy."
+      },
+      "appleNotes": {
+        "title": "Apple Notes",
+        "label": "Ajouter à Apple Notes",
+        "description": "Chaque note est aussi ajoutée dans un dossier « Handy » de Notes. macOS demande l'autorisation la première fois.",
+        "openSettings": "Ouvrir les Réglages Système"
+      }
+    }
   }
 }

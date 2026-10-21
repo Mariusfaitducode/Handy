@@ -4,9 +4,14 @@ export { AdvancedSettings } from "./advanced/AdvancedSettings";
 export { DebugSettings } from "./debug/DebugSettings";
 export type { OnboardingPreviewStep } from "./debug/OnboardingPreview";
 export { HistorySettings } from "./history/HistorySettings";
+export { DictionarySettings } from "./dictionary/DictionarySettings";
+export { StatsSettings } from "./stats/StatsSettings";
 export { AboutSettings } from "./about/AboutSettings";
 export { PostProcessingSettings } from "./post-processing/PostProcessingSettings";
 export { ModelsSettings } from "./models/ModelsSettings";
+export { MeetingsSettings } from "./meetings/MeetingsSettings";
+export { VoiceCommandsSettings } from "./voice-commands/VoiceCommandsSettings";
+export { NotesSettings } from "./notes/NotesSettings";
 
 // Individual setting components
 export { MicrophoneSelector } from "./MicrophoneSelector";
@@ -21,7 +26,6 @@ export { GlobalShortcutInput } from "./GlobalShortcutInput";
 export { HandyKeysShortcutInput } from "./HandyKeysShortcutInput";
 export { ShortcutInput } from "./ShortcutInput";
 export { TranslateToEnglish } from "./TranslateToEnglish";
-export { CustomWords } from "./CustomWords";
 export { PostProcessingToggle } from "./PostProcessingToggle";
 export { PostProcessingSettingsApi } from "./PostProcessingSettingsApi";
 export { PostProcessingSettingsPrompts } from "./PostProcessingSettingsPrompts";

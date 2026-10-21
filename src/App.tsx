@@ -31,7 +31,14 @@ import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
 import { WhatsNewGate } from "./components/whats-new";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
-import { commands } from "@/bindings";
+import { commands, events, type CalendarAnswer } from "@/bindings";
+import { meetingErrorMessage } from "@/components/settings/meetings/format";
+import { OPEN_SECTION_EVENT } from "@/components/settings/meetings/MeetingDetail";
+import {
+  CALENDAR_OPEN_EVENT,
+  OPEN_MEETING_EVENT,
+  useMeetingNavigation,
+} from "@/stores/meetingNavigationStore";
 import { deleteRetiredModel } from "@/components/onboarding/retiredModels";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
@@ -173,6 +180,87 @@ function App() {
       unlisten.then((fn) => fn());
     };
   }, [t]);
+
+  // Meetings: the recording indicator asks to show a meeting, a meeting page
+  // asks to show another section, and meeting actions started from the
+  // shortcut, tray or CLI report failures here (there is no button to show
+  // them on, so the window comes forward).
+  const openMeeting = useMeetingNavigation((state) => state.openMeeting);
+  useEffect(() => {
+    const opened = listen<number>(OPEN_MEETING_EVENT, (event) => {
+      openMeeting(event.payload);
+      setCurrentSection("meetings");
+    });
+    const failed = events.meetingErrorEvent.listen(async (event) => {
+      await commands.showMainWindowCommand().catch(() => {});
+      toast.error(meetingErrorMessage(event.payload.code, t));
+    });
+    const onOpenSection = (event: Event) => {
+      const section = (event as CustomEvent<string>).detail;
+      if (section in SECTIONS_CONFIG) {
+        setCurrentSection(section as SidebarSection);
+      }
+    };
+    // A calendar notification was clicked.
+    const calendarOpened = listen(CALENDAR_OPEN_EVENT, () => {
+      openMeeting(null);
+      setCurrentSection("meetings");
+    });
+    // Calendar prompts that couldn't be shown as notifications.
+    const prompted = events.calendarPromptEvent.listen((event) => {
+      const { kind, key } = event.payload;
+      const title = event.payload.title || t("meetings.calendar.untitled");
+      const answer = (value: CalendarAnswer) => () => {
+        commands.answerCalendarPrompt(key, value).catch(() => {});
+      };
+      const options = { id: `calendar-${kind}-${key}`, duration: 60_000 };
+      if (kind === "ended") {
+        toast(t("meetings.calendar.prompt.endedTitle", { title }), {
+          ...options,
+          description: t("meetings.calendar.prompt.endedBody"),
+          action: {
+            label: t("meetings.calendar.prompt.stop"),
+            onClick: answer("stop"),
+          },
+          cancel: {
+            label: t("meetings.calendar.prompt.keep"),
+            onClick: answer("keep"),
+          },
+        });
+      } else {
+        const auto = kind === "auto_soon";
+        toast(t("meetings.calendar.prompt.soonTitle", { title }), {
+          ...options,
+          description: auto
+            ? t("meetings.calendar.prompt.autoBody")
+            : t("meetings.calendar.prompt.soonBody"),
+          action: auto
+            ? {
+                label: t("meetings.calendar.prompt.dontRecord"),
+                onClick: answer("ignore"),
+              }
+            : {
+                label: t("meetings.calendar.prompt.record"),
+                onClick: answer("record"),
+              },
+          cancel: auto
+            ? undefined
+            : {
+                label: t("meetings.calendar.prompt.ignore"),
+                onClick: answer("ignore"),
+              },
+        });
+      }
+    });
+    window.addEventListener(OPEN_SECTION_EVENT, onOpenSection);
+    return () => {
+      opened.then((fn) => fn());
+      failed.then((fn) => fn());
+      calendarOpened.then((fn) => fn());
+      prompted.then((fn) => fn());
+      window.removeEventListener(OPEN_SECTION_EVENT, onOpenSection);
+    };
+  }, [openMeeting, t]);
 
   // Listen for paste failures and show a toast.
   // The technical error detail is logged to handy.log on the Rust side

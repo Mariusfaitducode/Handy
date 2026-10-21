@@ -106,6 +106,14 @@ pub enum PostProcessApiFormat {
     Anthropic,
 }
 
+/// A dictionary "heard → written" pair, mirrored from the dictionary so the
+/// transcription pipeline can apply it (see `crate::dictionary`).
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Type)]
+pub struct WordReplacement {
+    pub from: String,
+    pub to: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
 pub struct PostProcessProvider {
     pub id: String,
@@ -441,6 +449,9 @@ pub struct AppSettings {
     pub log_level: LogLevel,
     #[serde(default)]
     pub custom_words: Vec<String>,
+    /// Derived from the dictionary; edit through the dictionary commands.
+    #[serde(default)]
+    pub dictionary_replacements: Vec<WordReplacement>,
     #[serde(default)]
     pub model_unload_timeout: ModelUnloadTimeout,
     #[serde(default = "default_word_correction_threshold")]
@@ -471,6 +482,18 @@ pub struct AppSettings {
     pub post_process_prompts: Vec<LLMPrompt>,
     #[serde(default)]
     pub post_process_selected_prompt_id: Option<String>,
+    /// Pick the post-processing prompt from the app being dictated into.
+    #[serde(default = "default_app_styles_enabled")]
+    pub app_styles_enabled: bool,
+    /// User overrides of the built-in app → style suggestions.
+    #[serde(default)]
+    pub app_style_rules: Vec<crate::app_styles::AppStyleRule>,
+    /// Apps recently dictated into, listed in settings for quick mapping.
+    #[serde(default)]
+    pub app_style_recent: Vec<crate::app_styles::AppStyleRecent>,
+    /// Whether the built-in style prompts were already added once.
+    #[serde(default)]
+    pub app_styles_seeded: bool,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -535,6 +558,21 @@ pub struct AppSettings {
     /// `overlay_position` (position `none` → style `None`).
     #[serde(default = "default_overlay_style")]
     pub overlay_style: OverlayStyle,
+    /// Meeting mode preferences (summary, export, retention, indicator).
+    #[serde(default)]
+    pub meeting: crate::meeting::MeetingSettings,
+    /// Voice commands: hold a dedicated shortcut and speak an instruction that
+    /// the configured LLM applies to the selected text (or uses to write new
+    /// text when nothing is selected). Off by default so the extra global
+    /// shortcut is only registered for people who opt in.
+    #[serde(default)]
+    pub voice_commands_enabled: bool,
+    /// Voice notes (dedicated shortcut that saves instead of pasting).
+    #[serde(default)]
+    pub voice_notes: crate::notes::VoiceNotesSettings,
+    /// Calendar auto-start (mode, followed calendars, per-event choices).
+    #[serde(default)]
+    pub calendar: crate::calendar::CalendarSettings,
 }
 
 fn default_model() -> String {
@@ -671,6 +709,10 @@ fn default_app_language() -> String {
 }
 
 fn default_show_tray_icon() -> bool {
+    true
+}
+
+fn default_app_styles_enabled() -> bool {
     true
 }
 
@@ -906,6 +948,9 @@ fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
 
 pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 
+/// Shortcut binding id of the voice command mode.
+pub const VOICE_COMMAND_BINDING_ID: &str = "voice_command";
+
 pub fn get_default_settings() -> AppSettings {
     #[cfg(target_os = "windows")]
     let default_shortcut = "ctrl+space";
@@ -947,6 +992,58 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_post_process_shortcut.to_string(),
         },
     );
+    #[cfg(target_os = "macos")]
+    let default_meeting_shortcut = "option+shift+m";
+    #[cfg(not(target_os = "macos"))]
+    let default_meeting_shortcut = "ctrl+alt+m";
+    bindings.insert(
+        "toggle_meeting".to_string(),
+        ShortcutBinding {
+            id: "toggle_meeting".to_string(),
+            name: "Start / Stop Meeting".to_string(),
+            description: "Starts recording a meeting, or stops the one in progress.".to_string(),
+            default_binding: default_meeting_shortcut.to_string(),
+            current_binding: default_meeting_shortcut.to_string(),
+        },
+    );
+
+    // Mnemonic sibling of the dictation shortcut (option+space): add Command
+    // for "command". Only registered while voice commands are enabled.
+    #[cfg(target_os = "macos")]
+    let default_voice_command_shortcut = "option+command+space";
+    #[cfg(not(target_os = "macos"))]
+    let default_voice_command_shortcut = "ctrl+alt+space";
+
+    bindings.insert(
+        VOICE_COMMAND_BINDING_ID.to_string(),
+        ShortcutBinding {
+            id: VOICE_COMMAND_BINDING_ID.to_string(),
+            name: "Voice Command".to_string(),
+            description: "Applies a spoken instruction to the selected text, or writes new text."
+                .to_string(),
+            default_binding: default_voice_command_shortcut.to_string(),
+            current_binding: default_voice_command_shortcut.to_string(),
+        },
+    );
+
+    // Avoids the dictation shortcuts and the macOS input-source switchers
+    // (Ctrl+Space, Ctrl+Option+Space).
+    #[cfg(target_os = "macos")]
+    let default_voice_note_shortcut = "ctrl+shift+space";
+    #[cfg(not(target_os = "macos"))]
+    // Not ctrl+alt+space: that is the voice-command default off macOS.
+    let default_voice_note_shortcut = "ctrl+alt+n";
+    bindings.insert(
+        crate::notes::VOICE_NOTE_BINDING.to_string(),
+        ShortcutBinding {
+            id: crate::notes::VOICE_NOTE_BINDING.to_string(),
+            name: "Voice Note".to_string(),
+            description: "Records a thought and saves it as a note instead of pasting it."
+                .to_string(),
+            default_binding: default_voice_note_shortcut.to_string(),
+            current_binding: default_voice_note_shortcut.to_string(),
+        },
+    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
@@ -984,6 +1081,7 @@ pub fn get_default_settings() -> AppSettings {
         debug_mode: false,
         log_level: default_log_level(),
         custom_words: Vec::new(),
+        dictionary_replacements: Vec::new(),
         model_unload_timeout: ModelUnloadTimeout::default(),
         word_correction_threshold: default_word_correction_threshold(),
         history_limit: default_history_limit(),
@@ -999,6 +1097,10 @@ pub fn get_default_settings() -> AppSettings {
         post_process_models: default_post_process_models(),
         post_process_prompts: default_post_process_prompts(),
         post_process_selected_prompt_id: None,
+        app_styles_enabled: default_app_styles_enabled(),
+        app_style_rules: Vec::new(),
+        app_style_recent: Vec::new(),
+        app_styles_seeded: false,
         mute_while_recording: false,
         append_trailing_space: false,
         app_language: default_app_language(),
@@ -1022,6 +1124,10 @@ pub fn get_default_settings() -> AppSettings {
         vad_backend: VadBackend::default(),
         long_form_chunking: default_long_form_chunking(),
         overlay_style: default_overlay_style(),
+        meeting: crate::meeting::MeetingSettings::default(),
+        voice_commands_enabled: false,
+        voice_notes: crate::notes::VoiceNotesSettings::default(),
+        calendar: crate::calendar::CalendarSettings::default(),
     }
 }
 
@@ -1104,7 +1210,9 @@ pub fn get_settings(app: &AppHandle) -> AppSettings {
         default_settings
     };
 
-    if ensure_post_process_defaults(&mut settings) {
+    let post_process_changed = ensure_post_process_defaults(&mut settings);
+    let app_styles_changed = crate::app_styles::ensure_app_style_defaults(&mut settings);
+    if post_process_changed || app_styles_changed {
         store.set("settings", serde_json::to_value(&settings).unwrap());
     }
 

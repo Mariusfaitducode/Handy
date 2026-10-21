@@ -224,9 +224,50 @@ async changePostProcessEnabledSetting(enabled: boolean) : Promise<Result<null, s
     else return { status: "error", error: e  as any };
 }
 },
+async getAppStyles() : Promise<AppStyleRow[]> {
+    return await TAURI_INVOKE("get_app_styles");
+},
+async setAppStyle(appKey: string, appName: string, promptId: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_app_style", { appKey, appName, promptId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Adds an app to the list without changing its style (from the "Add an app"
+ * picker), so it shows with its suggestion and can be mapped.
+ */
+async addAppStyleApp(appKey: string, appName: string) : Promise<void> {
+    await TAURI_INVOKE("add_app_style_app", { appKey, appName });
+},
+/**
+ * Removes an app from the list and drops any custom style for it.
+ */
+async forgetAppStyleApp(appKey: string) : Promise<void> {
+    await TAURI_INVOKE("forget_app_style_app", { appKey });
+},
+async changeAppStylesEnabledSetting(enabled: boolean) : Promise<void> {
+    await TAURI_INVOKE("change_app_styles_enabled_setting", { enabled });
+},
+/**
+ * Apps currently open, for the "Add an app" picker.
+ */
+async listRunningAppsForStyles() : Promise<RunningApp[]> {
+    return await TAURI_INVOKE("list_running_apps_for_styles");
+},
 async changeExperimentalEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_experimental_enabled_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async changeVoiceCommandsEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_voice_commands_enabled_setting", { enabled }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -935,6 +976,149 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
+ * Saves the user's correction of a transcription and returns what the
+ * dictionary could learn from it. Nothing is added until the user confirms.
+ */
+async updateHistoryEntryText(id: number, text: string) : Promise<Result<DictionarySuggestion[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_history_entry_text", { id, text }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getDictionary() : Promise<DictionarySnapshot> {
+    return await TAURI_INVOKE("get_dictionary");
+},
+/**
+ * Adds a vocabulary word (`to` empty) or a "heard → written" replacement.
+ * Errors are codes the UI translates: `empty`, `too_long`, `duplicate`.
+ */
+async addDictionaryEntry(from: string, to: string | null) : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_dictionary_entry", { from, to }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async removeDictionaryEntry(id: string) : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("remove_dictionary_entry", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setDictionaryAuthor(name: string) : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_dictionary_author", { name }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Lets the user pick the shared folder, then syncs with it. `None` if the
+ * dialog was cancelled. `title` is the dialog's (translated) title.
+ */
+async chooseDictionarySyncFolder(title: string) : Promise<Result<DictionarySnapshot | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("choose_dictionary_sync_folder", { title }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async stopDictionarySync() : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("stop_dictionary_sync") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async syncDictionaryNow() : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_dictionary_now") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Asks where to save, then writes the live entries there. Returns how many
+ * were exported, or `None` if the dialog was cancelled. Errors are codes the
+ * UI translates: `not_json`, `not_a_dictionary` (refusing to replace a file
+ * that is not an earlier export), otherwise `write_failed: …`.
+ */
+async exportDictionary(filterName: string) : Promise<Result<number | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("export_dictionary", { filterName }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Asks for a dictionary file and merges it into this one. Never removes
+ * anything. `None` if the dialog was cancelled.
+ */
+async importDictionary(filterName: string) : Promise<Result<ImportSummary | null, SyncError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("import_dictionary", { filterName }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Proper nouns that keep coming back in recent dictations.
+ */
+async getDictionarySuggestions() : Promise<Result<DictionarySuggestion[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_dictionary_suggestions") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async dismissDictionarySuggestion(key: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("dismiss_dictionary_suggestion", { key }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getUsageStats() : Promise<Result<UsageStats, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_usage_stats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Returns the speed actually stored (clamped to a sensible range).
+ */
+async setStatsTypingSpeed(wpm: number) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_stats_typing_speed", { wpm }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async resetUsageStats() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("reset_usage_stats") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
  * This uses pmset to check for battery information.
@@ -947,6 +1131,339 @@ async isLaptop() : Promise<Result<boolean, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async startMeeting(title: string | null) : Promise<Result<MeetingStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("start_meeting", { title }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async stopMeeting() : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("stop_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async pauseMeeting() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("pause_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async resumeMeeting() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("resume_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeetingStatus() : Promise<MeetingStatus> {
+    return await TAURI_INVOKE("get_meeting_status");
+},
+async listMeetings() : Promise<Result<MeetingRecord[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_meetings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeeting(id: number) : Promise<Result<MeetingDetail, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_meeting", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async renameMeeting(id: number, title: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("rename_meeting", { id, title }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteMeeting(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_meeting", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async regenerateMeetingSummary(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("regenerate_meeting_summary", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeetingCapabilities() : Promise<MeetingCapabilities> {
+    return await TAURI_INVOKE("get_meeting_capabilities");
+},
+async updateMeetingSettings(settings: MeetingSettings) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_meeting_settings", { settings }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Opens the pane where "System Audio Recording" access is granted.
+ */
+async openSystemAudioSettings() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_system_audio_settings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getMeetingText(id: number, part: MeetingTextPart) : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_meeting_text", { id, part }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Saves the meeting as Markdown in `dir` (remembered as the export folder),
+ * or in the saved export folder. Returns the file's path.
+ */
+async exportMeetingMarkdown(id: number, dir: string | null) : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("export_meeting_markdown", { id, dir }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async revealMeetingExport(path: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("reveal_meeting_export", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getVoiceNotes() : Promise<Result<VoiceNote[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_voice_notes") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getVoiceNotesStatus() : Promise<VoiceNotesStatus> {
+    return await TAURI_INVOKE("get_voice_notes_status");
+},
+/**
+ * Save the user-editable part of the voice notes settings. Notion fields
+ * are owned by `connect_notion` / `disconnect_notion` and preserved here.
+ */
+async updateVoiceNotesSettings(voiceNotes: VoiceNotesSettings) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_voice_notes_settings", { voiceNotes }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteVoiceNote(id: number) : Promise<Result<MarkdownDeleteOutcome, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_voice_note", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open a note where it lives: its Markdown file, else its Notion page,
+ * else Apple Notes.
+ */
+async openVoiceNote(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_note", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open a specific destination of a note (used by the destination chips).
+ */
+async openVoiceNoteDestination(id: number, destination: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_note_destination", { id, destination }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async retryVoiceNoteExports(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("retry_voice_note_exports", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async openVoiceNotesFolder() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_notes_folder") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Verify the token against the parent page, then store the token in the
+ * keychain and remember the page. Errors are stable codes the UI
+ * translates (`notion_invalid_token`, `notion_page_not_found`, …).
+ */
+async connectNotion(token: string, page: string) : Promise<Result<NotionConnection, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("connect_notion", { token, page }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async disconnectNotion() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("disconnect_notion") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Ask macOS for Automation access to Notes (shows the system prompt the
+ * first time). Errors: `apple_notes_denied`, `apple_notes_failed: …`.
+ */
+async checkAppleNotesAccess() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("check_apple_notes_access") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open the macOS privacy pane a voice-note destination needs:
+ * `automation` (Apple Notes) or `files` (Markdown folder).
+ */
+async openVoiceNotesPrivacySettings(pane: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_voice_notes_privacy_settings", { pane }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getCalendarOverview() : Promise<Result<CalendarOverview, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_calendar_overview") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Turns the feature on: asks for calendar access (and then for
+ * notifications) if needed, and switches to "Ask" when access is granted.
+ */
+async enableCalendar() : Promise<Result<CalendarOverview, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("enable_calendar") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Asks for notification access again (after the feature was set up with
+ * it undetermined).
+ */
+async requestCalendarNotifications() : Promise<Result<CalendarOverview, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("request_calendar_notifications") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async listCalendars() : Promise<Result<CalendarInfo[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_calendars") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateCalendarSettings(settings: CalendarSettings) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_calendar_settings", { settings }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Record (`true`), don't record (`false`) or follow the rules (`None`) for
+ * one occurrence.
+ */
+async setCalendarEventChoice(key: string, record: boolean | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_calendar_event_choice", { key, record }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The answer to a prompt shown in the window (when notifications are off).
+ */
+async answerCalendarPrompt(key: string, answer: CalendarAnswer) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("answer_calendar_prompt", { key, answer }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Opens the System Settings pane where access is granted.
+ */
+async openCalendarSystemSettings(pane: CalendarSettingsPane) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_calendar_system_settings", { pane }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Opens an event's call link in the browser (or the Zoom/Teams app).
+ */
+async openMeetingLink(url: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_meeting_link", { url }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -954,13 +1471,31 @@ async isLaptop() : Promise<Result<boolean, string>> {
 
 
 export const events = __makeEvents__<{
+calendarChangedEvent: CalendarChangedEvent,
+calendarPromptEvent: CalendarPromptEvent,
+dictionaryChangedEvent: DictionaryChangedEvent,
 historyUpdatePayload: HistoryUpdatePayload,
+meetingErrorEvent: MeetingErrorEvent,
+meetingSegmentEvent: MeetingSegmentEvent,
+meetingSegmentRemovedEvent: MeetingSegmentRemovedEvent,
+meetingStatusEvent: MeetingStatusEvent,
+meetingUpdatedEvent: MeetingUpdatedEvent,
 streamPhaseEvent: StreamPhaseEvent,
-streamTextEvent: StreamTextEvent
+streamTextEvent: StreamTextEvent,
+voiceNotesChanged: VoiceNotesChanged
 }>({
+calendarChangedEvent: "calendar-changed-event",
+calendarPromptEvent: "calendar-prompt-event",
+dictionaryChangedEvent: "dictionary-changed-event",
 historyUpdatePayload: "history-update-payload",
+meetingErrorEvent: "meeting-error-event",
+meetingSegmentEvent: "meeting-segment-event",
+meetingSegmentRemovedEvent: "meeting-segment-removed-event",
+meetingStatusEvent: "meeting-status-event",
+meetingUpdatedEvent: "meeting-updated-event",
 streamPhaseEvent: "stream-phase-event",
-streamTextEvent: "stream-text-event"
+streamTextEvent: "stream-text-event",
+voiceNotesChanged: "voice-notes-changed"
 })
 
 /** user-defined constants **/
@@ -1009,7 +1544,27 @@ whats_new_last_seen_version?: string; selected_model?: string; onboarding_comple
  * Which input channel to use on the selected microphone device.
  * None means "average all channels" (original behavior).
  */
-selected_channel?: number | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+selected_channel?: number | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
+/**
+ * Derived from the dictionary; edit through the dictionary commands.
+ */
+dictionary_replacements?: WordReplacement[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; 
+/**
+ * Pick the post-processing prompt from the app being dictated into.
+ */
+app_styles_enabled?: boolean; 
+/**
+ * User overrides of the built-in app → style suggestions.
+ */
+app_style_rules?: AppStyleRule[]; 
+/**
+ * Apps recently dictated into, listed in settings for quick mapping.
+ */
+app_style_recent?: AppStyleRecent[]; 
+/**
+ * Whether the built-in style prompts were already added once.
+ */
+app_styles_seeded?: boolean; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1042,11 +1597,155 @@ long_form_chunking?: boolean;
  * not gated on this — that follows model capability. Migrated from the old
  * `overlay_position` (position `none` → style `None`).
  */
-overlay_style?: OverlayStyle }
+overlay_style?: OverlayStyle; 
+/**
+ * Meeting mode preferences (summary, export, retention, indicator).
+ */
+meeting?: MeetingSettings; 
+/**
+ * Voice commands: hold a dedicated shortcut and speak an instruction that
+ * the configured LLM applies to the selected text (or uses to write new
+ * text when nothing is selected). Off by default so the extra global
+ * shortcut is only registered for people who opt in.
+ */
+voice_commands_enabled?: boolean; 
+/**
+ * Voice notes (dedicated shortcut that saves instead of pasting).
+ */
+voice_notes?: VoiceNotesSettings; 
+/**
+ * Calendar auto-start (mode, followed calendars, per-event choices).
+ */
+calendar?: CalendarSettings }
+/**
+ * An app or site the user recently dictated into (or added by hand), shown
+ * in the settings list so mapping it is one click away.
+ */
+export type AppStyleRecent = { app_key: string; app_name: string }
+/**
+ * One row of the "Style by app" settings list.
+ */
+export type AppStyleRow = { app_key: string; app_name: string; 
+/**
+ * Built-in suggestion for this app, when that style prompt still exists.
+ */
+suggested_prompt_id: string | null; 
+/**
+ * The style that will actually be used. `None` = the default prompt.
+ */
+prompt_id: string | null; 
+/**
+ * True when the user overrode the suggestion.
+ */
+custom: boolean; is_web: boolean }
+/**
+ * A user's explicit choice for one app or site. `prompt_id: None` means
+ * "use the default prompt" (i.e. opt this app out of its suggested style).
+ */
+export type AppStyleRule = { app_key: string; app_name: string; prompt_id: string | null }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AvailableAccelerators = { transcribe: string[]; gpu_devices: GpuDeviceOption[] }
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
+/**
+ * Whether Handy may read the calendar.
+ */
+export type CalendarAccess = 
+/**
+ * Not asked yet.
+ */
+"not_determined" | "granted" | 
+/**
+ * Refused, or restricted by the administrator, or "add events only".
+ */
+"denied" | 
+/**
+ * Not macOS.
+ */
+"unsupported"
+/**
+ * What the user answered to a prompt.
+ */
+export type CalendarAnswer = "record" | "ignore" | "stop" | "keep"
+/**
+ * The upcoming list or the access changed: refetch the overview.
+ */
+export type CalendarChangedEvent = null
+/**
+ * A calendar the user can follow or not.
+ */
+export type CalendarInfo = { id: string; title: string; 
+/**
+ * The account it belongs to ("iCloud", "Google", an address…).
+ */
+source: string; color: string | null; followed: boolean }
+/**
+ * When calendar events turn into meetings.
+ */
+export type CalendarMode = 
+/**
+ * Not set up, or turned off: the calendar isn't read at all.
+ */
+"off" | 
+/**
+ * A notification a minute before asks whether to record.
+ */
+"ask" | 
+/**
+ * Recording starts on its own; the notification a minute before lets
+ * the user opt out.
+ */
+"auto"
+/**
+ * Everything the "Upcoming meetings" section shows.
+ */
+export type CalendarOverview = { access: CalendarAccess; notifications: NotificationAccess; mode: CalendarMode; upcoming: UpcomingMeeting[] }
+/**
+ * A prompt that couldn't be shown as a notification, shown in the window
+ * instead.
+ */
+export type CalendarPromptEvent = { kind: CalendarPromptKind; key: string; title: string }
+export type CalendarPromptKind = 
+/**
+ * "X starts in 1 min — Record / Ignore".
+ */
+"soon" | 
+/**
+ * "X starts in 1 min, recording automatically — Don't record".
+ */
+"auto_soon" | 
+/**
+ * "X seems to be over — Stop / Keep recording".
+ */
+"ended"
+/**
+ * Calendar preferences, stored as one object in the app settings.
+ */
+export type CalendarSettings = { mode: CalendarMode; 
+/**
+ * Calendars the user unticked. New calendars are followed by default.
+ */
+excluded_calendars: string[]; 
+/**
+ * Only events with a Meet/Zoom/Teams… link are offered.
+ */
+only_video_calls: boolean; 
+/**
+ * Events with nobody else invited (focus blocks with a link…) are not
+ * offered.
+ */
+skip_without_attendees: boolean; 
+/**
+ * Occurrences (see [`detect::RawEvent::key`]) the user chose not to
+ * record.
+ */
+skipped_events: string[]; 
+/**
+ * Occurrences the user chose to record although the rules above would
+ * skip them.
+ */
+included_events: string[] }
+export type CalendarSettingsPane = "calendars" | "notifications"
 /**
  * Script applied to Mandarin and Cantonese output. Other languages are never
  * converted.
@@ -1058,8 +1757,109 @@ export type ChineseScript =
 "as_transcribed" | "simplified" | "traditional"
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
+export type DailyUsage = { 
+/**
+ * Local calendar day, `YYYY-MM-DD`.
+ */
+day: string; words: number }
+/**
+ * Where a note stands for one destination.
+ */
+export type DestinationState = 
+/**
+ * Destination was not enabled when the note was taken.
+ */
+{ status: "off" } | 
+/**
+ * Export in flight.
+ */
+{ status: "pending" } | 
+/**
+ * Exported. `location` is a file path, a URL or an Apple Notes ID.
+ */
+{ status: "done"; location: string } | 
+/**
+ * Export failed; `error` is a stable code (the `ERR_*` constants of each
+ * destination module) the UI translates, optionally followed by `: detail`.
+ */
+{ status: "failed"; error: string }
+/**
+ * Emitted whenever the dictionary changes, including from a background sync.
+ */
+export type DictionaryChangedEvent = { 
+/**
+ * Entries a sync just brought in from the shared folder.
+ */
+received: MergeStats }
+export type DictionaryEntry = { id: string; kind: EntryKind; 
+/**
+ * Word: the term itself. Replacement: what the model writes by mistake.
+ */
+from: string; 
+/**
+ * Replacement only: what should be written instead. Empty for words.
+ */
+to?: string; 
+/**
+ * Display name of whoever added (or last re-added) the entry.
+ */
+added_by?: string; 
+/**
+ * Milliseconds since the Unix epoch.
+ */
+created_at?: number; 
+/**
+ * Milliseconds since the Unix epoch; drives conflict resolution.
+ */
+updated_at?: number; 
+/**
+ * Tombstone: kept so deletions propagate through sync.
+ */
+deleted?: boolean }
+/**
+ * Everything the dictionary page shows.
+ */
+export type DictionarySnapshot = { 
+/**
+ * Live entries, newest first.
+ */
+entries: DictionaryEntry[]; 
+/**
+ * The name stamped on entries added on this Mac.
+ */
+author: string; sync: SyncStatus }
+export type DictionarySuggestion = { 
+/**
+ * Stable key used to dismiss the suggestion for good.
+ */
+key: string; kind: EntryKind; from: string; 
+/**
+ * Replacement target; empty for words.
+ */
+to: string; 
+/**
+ * How often a recurring name was seen (recurring suggestions only).
+ */
+occurrences: number | null }
+export type EntryKind = 
+/**
+ * A term the model should know (sent as vocabulary when supported).
+ */
+"word" | 
+/**
+ * "Heard → written": rewritten after transcription.
+ */
+"replacement"
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
-export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
+export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean; 
+/**
+ * True for voice command entries (instruction → result).
+ */
+voice_command: boolean; 
+/**
+ * Voice commands only: the selection the instruction was applied to.
+ */
+command_source_text: string | null }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
 /**
  * Result of changing keyboard implementation
@@ -1069,6 +1869,7 @@ export type ImplementationChangeResult = { success: boolean;
  * List of binding IDs that were reset to defaults due to incompatibility
  */
 reset_bindings: string[] }
+export type ImportSummary = { stats: MergeStats; snapshot: DictionarySnapshot }
 export type KeyboardDiagnosticReport = { secure_input_enabled: boolean; culprit_pid: number | null; culprit_name: string | null; 
 /**
  * Counts only — key identity is deliberately never captured.
@@ -1077,6 +1878,156 @@ key_down: number; key_up: number; flags_changed: number; mouse: number; duration
 export type KeyboardImplementation = "tauri" | "handy_keys"
 export type LLMPrompt = { id: string; name: string; prompt: string }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * Outcome of a delete for the Markdown copy, so the UI can tell the user
+ * when a hand-edited journal was left untouched.
+ */
+export type MarkdownDeleteOutcome = "none" | "removed" | "left_untouched" | "failed"
+/**
+ * How notes are laid out in the Markdown folder.
+ */
+export type MarkdownLayout = 
+/**
+ * One journal file per day (`2026-10-21.md`), one section per note.
+ */
+"daily" | 
+/**
+ * One file per note (`2026-10-21 14-32 Title.md`).
+ */
+"per_note"
+/**
+ * What the Meetings section needs to explain before anything is recorded.
+ */
+export type MeetingCapabilities = { 
+/**
+ * The other participants can be captured (macOS 14.2+).
+ */
+system_audio_supported: boolean; system_audio_permission: SystemAudioPermission; 
+/**
+ * "Provider · model" summaries are sent to, or `None` when none is set up.
+ */
+summary_model: string | null }
+export type MeetingDetail = { record: MeetingRecord; segments: MeetingSegment[] }
+/**
+ * Shown by the main window as a toast.
+ */
+export type MeetingErrorEvent = { code: string }
+export type MeetingPhase = "idle" | "recording" | "paused" | 
+/**
+ * Capture stopped; the last utterances are being transcribed.
+ */
+"finishing"
+export type MeetingRecord = { id: number; 
+/**
+ * `None` until the user names it; the UI shows the date instead.
+ */
+title: string | null; 
+/**
+ * What started it: "manual", "shortcut", "tray", "cli", "calendar".
+ */
+source: string; calendar_event_id: string | null; 
+/**
+ * Unix milliseconds.
+ */
+started_at: number; ended_at: number | null; 
+/**
+ * Recorded time, pauses excluded.
+ */
+duration_ms: number; status: MeetingRecordStatus; system_audio: SystemAudioState; summary: string | null; summary_status: SummaryStatus; summary_error: string | null; 
+/**
+ * "Provider · model" that wrote the summary.
+ */
+summary_model: string | null; segment_count: number; 
+/**
+ * People invited to the calendar event it was started from (the user
+ * excluded). Empty for meetings started by hand.
+ */
+participants: string[] }
+/**
+ * Where a meeting is in its life.
+ */
+export type MeetingRecordStatus = 
+/**
+ * Being captured right now.
+ */
+"recording" | 
+/**
+ * Capture ended; the last utterances and the summary are being produced.
+ */
+"processing" | "done" | 
+/**
+ * Handy quit or crashed while recording; what was transcribed is kept.
+ */
+"interrupted"
+/**
+ * How long meetings are kept before they are deleted automatically.
+ */
+export type MeetingRetention = "forever" | "days_30" | "days_90" | "year"
+/**
+ * One transcribed utterance.
+ */
+export type MeetingSegment = { id: number; speaker: Speaker; 
+/**
+ * Milliseconds since the meeting started (pauses excluded).
+ */
+start_ms: number; end_ms: number; text: string }
+/**
+ * A segment was added to a meeting's transcript.
+ */
+export type MeetingSegmentEvent = { meeting_id: number; segment: MeetingSegment }
+/**
+ * A segment was removed (it was the microphone echoing the speakers).
+ */
+export type MeetingSegmentRemovedEvent = { meeting_id: number; segment_id: number }
+/**
+ * Meeting preferences, stored as one object in the app settings.
+ */
+export type MeetingSettings = { 
+/**
+ * Write the minutes when a meeting ends (needs a configured model).
+ */
+auto_summary: boolean; 
+/**
+ * Folder Markdown exports go to; asked for on first export.
+ */
+export_dir: string | null; 
+/**
+ * Save each finished meeting as Markdown in `export_dir`.
+ */
+auto_export: boolean; retention: MeetingRetention; 
+/**
+ * The floating recording indicator. Off for people who share their
+ * screen and don't want it in the share.
+ */
+show_indicator: boolean }
+/**
+ * Snapshot of the meeting in progress.
+ */
+export type MeetingStatus = { phase: MeetingPhase; meeting_id: number | null; title: string | null; 
+/**
+ * Unix milliseconds.
+ */
+started_at: number | null; 
+/**
+ * Recorded time (pauses excluded) as of `as_of`. While recording, add
+ * the time since `as_of` to get the live value.
+ */
+elapsed_ms: number; as_of: number; system_audio: SystemAudioState | null; 
+/**
+ * Utterances cut but not transcribed yet.
+ */
+pending_utterances: number }
+/**
+ * Emitted whenever the meeting in progress changes phase.
+ */
+export type MeetingStatusEvent = MeetingStatus
+export type MeetingTextPart = "summary" | "transcript" | "markdown"
+/**
+ * A meeting's record changed (title, summary, status) or it was deleted:
+ * refetch it.
+ */
+export type MeetingUpdatedEvent = { meeting_id: number; deleted: boolean }
+export type MergeStats = { added: number; updated: number; removed: number }
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 /**
@@ -1104,6 +2055,16 @@ sha256: string | null } } |
  */
 "Local"
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
+/**
+ * Whether Handy's notifications can be shown.
+ */
+export type NotificationAccess = "not_determined" | "granted" | "denied" | 
+/**
+ * Not available in this build (not running from an app bundle, or not
+ * macOS). Prompts then appear in the Handy window only.
+ */
+"unavailable"
+export type NotionConnection = { page_title: string | null }
 export type OverlayPosition = "top" | "bottom"
 /**
  * Which recording overlay to display. `Minimal` and `Live` share one base
@@ -1134,6 +2095,7 @@ export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "
  * A retired ONNX model found on disk.
  */
 export type RetiredModel = { id: string; name: string; size_mb: number; replacement_repo: string }
+export type RunningApp = { app_key: string; app_name: string }
 export type SecretMap = Partial<{ [key in string]: string }>
 export type SecureInputStatus = { 
 /**
@@ -1188,6 +2150,11 @@ export type ShortcutActivation =
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
 /**
+ * Who spoke. The microphone track is the user; the system track is everyone
+ * else on the call. Two tracks give this attribution without diarization.
+ */
+export type Speaker = "me" | "others"
+/**
  * Phase of the streaming overlay card, emitted to drive its UI state.
  */
 export type StreamPhase = 
@@ -1220,14 +2187,217 @@ export type StreamTextEvent = { committed: string; tentative: string }
  */
 export type StreamWorkKind = "transcribing" | "polishing"
 /**
+ * State of a meeting's written summary.
+ */
+export type SummaryStatus = 
+/**
+ * Not requested (yet).
+ */
+"none" | "pending" | "done" | "failed" | 
+/**
+ * No language model is configured; the transcript stands alone.
+ */
+"not_configured" | 
+/**
+ * Too little was said to summarize.
+ */
+"empty"
+export type SyncError = { kind: SyncErrorKind; detail: string }
+/**
+ * Why a sync or import did not go through. The frontend turns the kind into
+ * a sentence; `detail` is only for the logs.
+ */
+export type SyncErrorKind = "folder_missing" | 
+/**
+ * iCloud has the file but has not downloaded it to this Mac yet.
+ */
+"not_downloaded" | "unreadable" | "write_failed"
+export type SyncStatus = { folder: string | null; last_sync_at: number | null; error: SyncError | null }
+/**
+ * What the OS reports about the "System Audio Recording" permission.
+ */
+export type SystemAudioPermission = "authorized" | "denied" | 
+/**
+ * Not asked yet, or the OS doesn't say. Starting a meeting asks.
+ */
+"unknown"
+/**
+ * Whether the other participants could be captured.
+ */
+export type SystemAudioState = 
+/**
+ * The computer's audio is captured on its own track.
+ */
+"captured" | 
+/**
+ * Not available on this OS (needs macOS 14.2+).
+ */
+"unsupported" | 
+/**
+ * The user refused "System Audio Recording" permission.
+ */
+"denied" | 
+/**
+ * Capture failed to start for another reason.
+ */
+"failed"
+/**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes Handy already ships.
  */
 export type Theme = "system" | "light" | "dark"
 export type TranscribeAcceleratorSetting = "auto" | "cpu" | "gpu"
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
+/**
+ * Where an upcoming event stands.
+ */
+export type UpcomingDecision = 
+/**
+ * Will be offered (Ask) or recorded (Auto).
+ */
+"record" | 
+/**
+ * The user said not to record this one.
+ */
+"skipped" | 
+/**
+ * Nobody else is invited, so it isn't offered; the user can still ask
+ * for it.
+ */
+"no_attendees"
+/**
+ * An event in "Upcoming meetings".
+ */
+export type UpcomingMeeting = { 
+/**
+ * Identifies this occurrence.
+ */
+key: string; title: string; 
+/**
+ * Unix milliseconds.
+ */
+start_ms: number; end_ms: number; calendar_title: string; calendar_color: string | null; video: VideoLink | null; 
+/**
+ * Other people invited, as the minutes will name them.
+ */
+participants: string[]; decision: UpcomingDecision; 
+/**
+ * Being recorded right now (started from the calendar).
+ */
+recording: boolean }
+export type UsageShare = { 
+/**
+ * App name, or language code (ISO 639-1) for languages.
+ */
+name: string; words: number }
+export type UsageStats = { total_words: number; total_dictations: number; today_words: number; 
+/**
+ * Rolling last 7 days, today included.
+ */
+week_words: number; 
+/**
+ * Estimated, never negative.
+ */
+time_saved_seconds: number; week_time_saved_seconds: number; current_streak_days: number; longest_streak_days: number; 
+/**
+ * Measured speaking pace, `None` until enough speech has been timed.
+ */
+speaking_wpm: number | null; typing_wpm: number; 
+/**
+ * One entry per day for the last `CHART_DAYS` days, oldest first,
+ * zero-filled.
+ */
+daily: DailyUsage[]; top_apps: UsageShare[]; 
+/**
+ * Words with a known app, to compute shares.
+ */
+app_words: number; languages: UsageShare[]; 
+/**
+ * Words with a known language, to compute shares.
+ */
+language_words: number; 
+/**
+ * First day with any activity.
+ */
+first_day: string | null }
 export type VadBackend = "silero" | "earshot"
+/**
+ * A call link found in an event.
+ */
+export type VideoLink = { 
+/**
+ * "meet", "zoom", "teams", "webex", "facetime", "whereby", "jitsi",
+ * "around", "slack", "other". The UI names it.
+ */
+provider: string; url: string }
+export type VoiceNote = { id: number; 
+/**
+ * Unix seconds.
+ */
+created_at: number; title: string; body: string; 
+/**
+ * The transcript before any cleanup, kept so nothing said is ever lost.
+ */
+raw_text: string; ai_processed: boolean; markdown: DestinationState; notion: DestinationState; apple_notes: DestinationState }
+/**
+ * Emitted whenever a note is added, updated (export finished) or deleted,
+ * so the Notes page can refresh.
+ */
+export type VoiceNotesChanged = { id: number }
+export type VoiceNotesSettings = { 
+/**
+ * Whether the voice-note shortcut is registered at all.
+ */
+enabled: boolean; 
+/**
+ * Title + light cleanup through the post-processing LLM, when one is
+ * configured. Without an LLM a title is derived from the first words.
+ */
+ai_cleanup: boolean; 
+/**
+ * Also write each note into a local Markdown folder.
+ */
+markdown_enabled: boolean; 
+/**
+ * `None` means the default folder (`~/Documents/Handy Notes`).
+ */
+markdown_folder: string | null; markdown_layout: MarkdownLayout; 
+/**
+ * Set once a Notion token was verified and stored in the keychain. The
+ * token itself never lives in this file.
+ */
+notion_connected: boolean; notion_parent_page_id: string | null; 
+/**
+ * Display name of the parent page, captured when connecting.
+ */
+notion_parent_title: string | null; 
+/**
+ * Also add each note to Apple Notes (macOS only), in a "Handy" folder.
+ */
+apple_notes_enabled: boolean }
+/**
+ * Everything the Notes page needs to render its settings, besides the
+ * persisted `voice_notes` settings themselves.
+ */
+export type VoiceNotesStatus = { 
+/**
+ * Label of the LLM provider used for titles/cleanup, if one is set up.
+ */
+llm_provider: string | null; 
+/**
+ * Folder used when no custom folder is chosen.
+ */
+default_folder: string | null; 
+/**
+ * Folder notes are written to right now.
+ */
+effective_folder: string | null; apple_notes_supported: boolean }
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
+/**
+ * A dictionary "heard → written" pair, mirrored from the dictionary so the
+ * transcription pipeline can apply it (see `crate::dictionary`).
+ */
+export type WordReplacement = { from: string; to: string }
 
 /** tauri-specta globals **/
 

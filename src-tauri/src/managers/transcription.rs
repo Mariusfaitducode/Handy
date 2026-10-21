@@ -4,6 +4,7 @@ use crate::audio_toolkit::{
     remove_filler_words, OutputLanguageEvidence,
 };
 use crate::chinese_script::{convert_chinese_script, ChineseVariety};
+use crate::dictionary::replace::apply_replacements;
 use crate::engine_supervisor::{
     CancelMark, DeviceInfo, DeviceSelector, EngineError, EngineSupervisor, LoadSpec, LoadedInfo,
     Unloading,
@@ -313,7 +314,8 @@ impl TranscriptionManager {
                     // model is never unloaded mid-session.
                     let is_recording = app_handle_cloned
                         .try_state::<Arc<AudioRecordingManager>>()
-                        .is_some_and(|a| a.is_recording());
+                        .is_some_and(|a| a.is_recording())
+                        || crate::meeting::is_meeting_active();
                     if is_recording {
                         manager_cloned.touch_activity();
                         continue;
@@ -487,6 +489,7 @@ impl TranscriptionManager {
         let settings = get_settings(&self.app_handle);
         if settings.model_unload_timeout == ModelUnloadTimeout::Immediately
             && self.is_model_loaded()
+            && !crate::meeting::is_meeting_active()
         {
             info!("Immediately unloading model after {}", context);
             self.request_unload();
@@ -1512,6 +1515,14 @@ fn post_process_transcription_text(
             raw
         };
 
+        // Dictionary "heard → written" pairs always apply, whether or not the
+        // model was given the vocabulary.
+        let corrected = if settings.dictionary_replacements.is_empty() {
+            corrected
+        } else {
+            apply_replacements(&corrected, &settings.dictionary_replacements)
+        };
+
         let without_fillers = remove_filler_words(
             &corrected,
             &output_language,
@@ -2161,6 +2172,27 @@ mod tests {
         assert!(matches!(plan.task, Task::Transcribe));
         assert_eq!(plan.language.as_deref(), Some("es"));
         assert_eq!(plan.target_language, None);
+    }
+
+    #[test]
+    fn dictionary_replacements_apply_even_when_vocabulary_was_sent() {
+        let settings = AppSettings {
+            selected_language: "fr".to_string(),
+            dictionary_replacements: vec![crate::settings::WordReplacement {
+                from: "Andy".to_string(),
+                to: "Handy".to_string(),
+            }],
+            ..Default::default()
+        };
+        let evidence = OutputLanguageEvidence::UserSelected("fr".to_string());
+        let text = post_process_transcription_text(
+            "j'utilise Andy tous les jours".to_string(),
+            &settings,
+            true,
+            &evidence,
+            &languages(&["fr"]),
+        );
+        assert_eq!(text, "j'utilise Handy tous les jours");
     }
 
     #[test]

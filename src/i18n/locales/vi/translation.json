@@ -7,7 +7,11 @@
     "model": "Mô hình",
     "quit": "Thoát",
     "cancel": "Hủy",
-    "secureInputWarning": "⚠ Phím tắt bị Secure Input chặn"
+    "secureInputWarning": "⚠ Phím tắt bị Secure Input chặn",
+    "startMeeting": "Start Meeting Recording",
+    "stopMeeting": "Stop Meeting",
+    "pauseMeeting": "Pause Meeting",
+    "resumeMeeting": "Resume Meeting"
   },
   "sidebar": {
     "general": "Chung",
@@ -15,8 +19,13 @@
     "advanced": "Nâng cao",
     "postProcessing": "Xử lý sau",
     "history": "Lịch sử",
+    "stats": "Statistics",
     "debug": "Gỡ lỗi",
-    "about": "Giới thiệu"
+    "about": "Giới thiệu",
+    "meetings": "Meetings",
+    "voiceCommands": "Commands",
+    "dictionary": "Dictionary",
+    "notes": "Notes"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chuyển đổi giọng nói",
@@ -90,6 +99,7 @@
   },
   "modelSelector": {
     "custom": "Tùy chỉnh",
+    "legacy": "Cũ",
     "streaming": "Truyền trực tiếp",
     "active": "Đang hoạt động",
     "switching": "Đang chuyển...",
@@ -106,49 +116,21 @@
     "noModelDownloadRequired": "Chưa Có Mô Hình - Cần Tải Xuống",
     "deleteModel": "Xóa {{modelName}}",
     "downloadSpeed": "{{speed}} MB/s",
-    "capabilities": {
-      "languageSelection": "Hỗ trợ nhiều ngôn ngữ đầu vào",
-      "languageCount": "{{total}} ngôn ngữ",
-      "translation": "Có thể dịch sang tiếng Anh",
-      "translate": "Dịch sang tiếng Anh",
-      "singleLanguage": "Chỉ hỗ trợ ngôn ngữ này",
-      "languageOnly": "Chỉ {{language}}",
-      "streaming": "Hiển thị phiên âm trực tiếp khi bạn nói"
-    },
     "cancel": "Hủy",
     "cancelDownload": "Hủy tải xuống",
-    "legacy": "Cũ"
+    "capabilities": {
+      "languageSelection": "Hỗ trợ nhiều ngôn ngữ đầu vào",
+      "singleLanguage": "Chỉ hỗ trợ ngôn ngữ này",
+      "languageCount": "{{total}} ngôn ngữ",
+      "languageOnly": "Chỉ {{language}}",
+      "translation": "Có thể dịch sang tiếng Anh",
+      "translate": "Dịch sang tiếng Anh",
+      "streaming": "Hiển thị phiên âm trực tiếp khi bạn nói"
+    }
   },
   "settings": {
     "modelSettings": {
       "title": "Cài đặt {{model}}"
-    },
-    "models": {
-      "title": "Mô hình chuyển đổi",
-      "description": "Chọn mô hình chuyển đổi hoặc tải thêm mô hình. Các mô hình khác nhau có mức độ chính xác và tốc độ khác nhau.",
-      "deleteConfirm": "Bạn có chắc chắn muốn xóa {{modelName}}? Bạn sẽ cần tải lại để sử dụng.",
-      "deleteActiveConfirm": "{{modelName}} là mô hình đang hoạt động của bạn. Xóa nó sẽ dừng phiên âm cho đến khi bạn chọn một mô hình mới. Bạn có chắc không?",
-      "deleteTitle": "Xóa mô hình",
-      "retiredNotice": {
-        "title": "Các mô hình cũ không còn hoạt động với Handy",
-        "description": "Chúng đang chiếm {{size}} trên máy tính của bạn.",
-        "delete": "Xóa mô hình",
-        "deleted": "Đã xóa các mô hình cũ",
-        "deleteFailed": "Không thể xóa một số mô hình cũ. Hãy kiểm tra nhật ký để biết chi tiết."
-      },
-      "filters": {
-        "allLanguages": "Tất cả ngôn ngữ",
-        "streaming": "Lọc các mô hình hỗ trợ phiên âm trực tiếp",
-        "translation": "Lọc các mô hình hỗ trợ dịch sang tiếng Anh"
-      },
-      "noModelsMatch": "Không có mô hình nào khớp với bộ lọc này.",
-      "yourModels": "Mô hình đã tải",
-      "availableModels": "Có sẵn để tải xuống",
-      "searchPlaceholder": "Tìm mô hình theo tên…",
-      "rescan": {
-        "label": "Quét lại",
-        "tooltip": "Quét lại các mô hình được thêm vào thư mục mô hình hoặc bộ nhớ đệm Hugging Face bên ngoài Handy"
-      }
     },
     "general": {
       "title": "Chung",
@@ -171,6 +153,18 @@
           "transcribe_with_post_process": {
             "name": "Phím tắt xử lý sau",
             "description": "Tùy chọn: Phím tắt chuyên dụng luôn áp dụng xử lý sau bằng AI cho bản chuyển đổi của bạn."
+          },
+          "toggle_meeting": {
+            "name": "Meeting Shortcut",
+            "description": "Starts recording a meeting, or stops the one in progress."
+          },
+          "voice_command": {
+            "name": "Voice Command Shortcut",
+            "description": "Hold this shortcut and say an instruction to apply to the selected text."
+          },
+          "voice_note": {
+            "name": "Voice Note Shortcut",
+            "description": "Records a thought and saves it as a note instead of typing it."
           }
         },
         "errors": {
@@ -200,6 +194,33 @@
           "toggle": "Nhấn phím tắt để bắt đầu ghi âm, nhấn lại để dừng"
         }
       }
+    },
+    "models": {
+      "title": "Mô hình chuyển đổi",
+      "description": "Chọn mô hình chuyển đổi hoặc tải thêm mô hình. Các mô hình khác nhau có mức độ chính xác và tốc độ khác nhau.",
+      "searchPlaceholder": "Tìm mô hình theo tên…",
+      "yourModels": "Mô hình đã tải",
+      "availableModels": "Có sẵn để tải xuống",
+      "deleteConfirm": "Bạn có chắc chắn muốn xóa {{modelName}}? Bạn sẽ cần tải lại để sử dụng.",
+      "deleteActiveConfirm": "{{modelName}} là mô hình đang hoạt động của bạn. Xóa nó sẽ dừng phiên âm cho đến khi bạn chọn một mô hình mới. Bạn có chắc không?",
+      "deleteTitle": "Xóa mô hình",
+      "retiredNotice": {
+        "title": "Các mô hình cũ không còn hoạt động với Handy",
+        "description": "Chúng đang chiếm {{size}} trên máy tính của bạn.",
+        "delete": "Xóa mô hình",
+        "deleted": "Đã xóa các mô hình cũ",
+        "deleteFailed": "Không thể xóa một số mô hình cũ. Hãy kiểm tra nhật ký để biết chi tiết."
+      },
+      "filters": {
+        "allLanguages": "Tất cả ngôn ngữ",
+        "streaming": "Lọc các mô hình hỗ trợ phiên âm trực tiếp",
+        "translation": "Lọc các mô hình hỗ trợ dịch sang tiếng Anh"
+      },
+      "rescan": {
+        "label": "Quét lại",
+        "tooltip": "Quét lại các mô hình được thêm vào thư mục mô hình hoặc bộ nhớ đệm Hugging Face bên ngoài Handy"
+      },
+      "noModelsMatch": "Không có mô hình nào khớp với bộ lọc này."
     },
     "sound": {
       "title": "Âm thanh",
@@ -442,6 +463,22 @@
         "cancel": "Hủy",
         "selectToEdit": "Chọn một prompt ở trên để xem và chỉnh sửa chi tiết.",
         "createFirst": "Nhấn 'Tạo Prompt mới' ở trên để tạo prompt xử lý sau đầu tiên của bạn."
+      },
+      "appStyles": {
+        "title": "Style by app",
+        "description": "Handy adapts the writing style to the app you dictate into. The app is only checked when the post-processing shortcut is used, so this costs nothing otherwise.",
+        "enabled": {
+          "label": "Adapt to the app",
+          "description": "Formal in Mail and Gmail, casual in Slack, WhatsApp and Messages, precise in Terminal, code editors and Claude. Other apps use your selected prompt."
+        },
+        "empty": "Apps you dictate into with post-processing will show up here. Mail, Slack, Messages, Terminal, VS Code, Gmail and many others already have a suggested style.",
+        "defaultOption": "Default prompt ({{name}})",
+        "defaultOptionNone": "Default prompt (none selected)",
+        "suggested": "Suggested for this app",
+        "website": "Website",
+        "addApp": "Add an open app…",
+        "hint": "Styles are the prompts above: edit them or create your own.",
+        "forget": "Remove {{name}} from the list"
       }
     },
     "history": {
@@ -458,7 +495,97 @@
       "retranscribe": "Phiên âm lại",
       "retranscribeError": "Không thể phiên âm lại. Vui lòng thử lại.",
       "transcribing": "Đang phiên âm...",
-      "transcriptionFailed": "Phiên âm thất bại. Bạn có thể phiên âm lại bằng biểu tượng thử lại."
+      "transcriptionFailed": "Phiên âm thất bại. Bạn có thể phiên âm lại bằng biểu tượng thử lại.",
+      "command": {
+        "badge": "Command",
+        "retry": "Run the command again",
+        "instruction": "“{{instruction}}”",
+        "noResult": "No result. Run the command again with the retry icon.",
+        "original": "Original text"
+      },
+      "edit": "Correct transcription",
+      "editSave": "Save",
+      "editCancel": "Cancel",
+      "editHint": "{{shortcut}} to save · Esc to cancel",
+      "editError": "Couldn't save your correction.",
+      "learn": {
+        "title": "Teach Handy this correction?",
+        "add": "Add",
+        "added": "Added",
+        "dismiss": "Not now"
+      }
+    },
+    "stats": {
+      "title": "Statistics",
+      "loading": "Loading statistics…",
+      "error": "Couldn't load your statistics.",
+      "retry": "Try again",
+      "empty": {
+        "title": "No statistics yet",
+        "description": "Dictate your first text with your shortcut. Words, time saved and your streak will show up here."
+      },
+      "hero": {
+        "words_one": "word dictated",
+        "words_other": "words dictated",
+        "timeSaved": "Time saved: about {{duration}}, compared with typing at {{wpm}} words/min",
+        "noTimeSaved": "Keep dictating to see how much time you save."
+      },
+      "tiles": {
+        "today": "Today",
+        "week": "Last 7 days",
+        "streak": "Streak",
+        "pace": "Speaking pace",
+        "streakValue_one": "{{count}} day",
+        "streakValue_other": "{{count}} days",
+        "streakBest": "Best: {{count}}",
+        "paceUnit": "words/min",
+        "unknown": "—",
+        "paceUnknownHint": "After a few dictations"
+      },
+      "chart": {
+        "title": "Last 30 days",
+        "start": "30 days ago",
+        "today": "Today",
+        "tooltip_one": "{{date}} · {{formatted}} word",
+        "tooltip_other": "{{date}} · {{formatted}} words",
+        "noWords": "{{date}} · no dictation"
+      },
+      "apps": {
+        "title": "Apps",
+        "empty": "Apps will be tracked from your next dictation."
+      },
+      "languages": {
+        "title": "Languages",
+        "empty": "Not enough text yet to detect a language."
+      },
+      "settings": {
+        "title": "Settings",
+        "typingSpeed": {
+          "title": "Your typing speed",
+          "description": "Used to estimate time saved. 40 words/min is the average for keyboard typing.",
+          "unit": "words/min"
+        },
+        "reset": {
+          "title": "Reset statistics",
+          "description": "Clears all statistics on this device. Your history is not affected.",
+          "button": "Reset",
+          "dialogTitle": "Reset statistics?",
+          "dialogBody": "Words, streaks and time saved will go back to zero. This can't be undone.",
+          "confirm": "Reset",
+          "cancel": "Cancel",
+          "error": "Couldn't reset statistics."
+        }
+      },
+      "footer": {
+        "privacy": "Computed on this device. No text is stored in statistics.",
+        "since": "Since {{date}}"
+      },
+      "duration": {
+        "lessThanMinute": "less than a minute",
+        "minutes": "{{minutes}} min",
+        "hours": "{{hours}} h",
+        "hoursMinutes": "{{hours}} h {{minutes}} min"
+      }
     },
     "debug": {
       "title": "Gỡ lỗi",
@@ -485,6 +612,20 @@
         "label": "Kiểm tra cập nhật",
         "description": "Tự động kiểm tra phiên bản mới của Handy",
         "lockedDescription": "Đã bị vô hiệu hóa bởi cấu hình hệ thống (HANDY_DISABLE_UPDATER)"
+      },
+      "whatsNewPreview": {
+        "title": "Xem trước điểm mới",
+        "description": "Mở ghi chú phát hành mới nhất được đóng gói mà không đánh dấu là đã xem",
+        "button": "Xem trước",
+        "noNotes": "Không tìm thấy ghi chú phát hành được đóng gói",
+        "error": "Không thể xem trước ghi chú phát hành"
+      },
+      "onboardingPreview": {
+        "title": "Xem trước thiết lập ban đầu",
+        "description": "Xem trước các màn hình thiết lập mà không thay đổi quyền, mô hình hoặc trạng thái hoàn tất",
+        "permissionsButton": "Quyền",
+        "modelsButton": "Chọn mô hình",
+        "exitButton": "Thoát xem trước"
       },
       "soundTheme": {
         "label": "Chủ đề âm thanh",
@@ -578,20 +719,6 @@
         "verdictOk": "Các sự kiện phím đang đến Handy bình thường.",
         "verdictNoEvents": "Không ghi nhận sự kiện nào — bạn có bấm phím nào trong lúc kiểm tra không?",
         "failed": "Chẩn đoán thất bại: {{error}}"
-      },
-      "whatsNewPreview": {
-        "title": "Xem trước điểm mới",
-        "description": "Mở ghi chú phát hành mới nhất được đóng gói mà không đánh dấu là đã xem",
-        "button": "Xem trước",
-        "noNotes": "Không tìm thấy ghi chú phát hành được đóng gói",
-        "error": "Không thể xem trước ghi chú phát hành"
-      },
-      "onboardingPreview": {
-        "title": "Xem trước thiết lập ban đầu",
-        "description": "Xem trước các màn hình thiết lập mà không thay đổi quyền, mô hình hoặc trạng thái hoàn tất",
-        "permissionsButton": "Quyền",
-        "modelsButton": "Chọn mô hình",
-        "exitButton": "Thoát xem trước"
       }
     },
     "about": {
@@ -599,6 +726,10 @@
       "version": {
         "title": "Phiên bản",
         "description": "Phiên bản hiện tại của Handy"
+      },
+      "whatsNewUpdates": {
+        "label": "Hiển thị điểm mới",
+        "description": "Hiển thị ghi chú phát hành sau khi Handy cập nhật"
       },
       "appDataDirectory": {
         "title": "Thư mục dữ liệu ứng dụng",
@@ -621,10 +752,116 @@
           "description": "Suy luận hiệu suất cao của mô hình nhận dạng giọng nói tự động Whisper của OpenAI",
           "details": "Handy sử dụng ggml để xử lý chuyển đổi giọng nói thành văn bản nhanh, cục bộ. Cảm ơn công việc tuyệt vời của Georgi Gerganov và các cộng tác viên."
         }
+      }
+    },
+    "voiceCommands": {
+      "title": "Voice commands",
+      "enable": {
+        "label": "Enable voice commands",
+        "description": "Select text, hold the shortcut and say what to do with it. With nothing selected, Handy writes the text at the cursor."
       },
-      "whatsNewUpdates": {
-        "label": "Hiển thị điểm mới",
-        "description": "Hiển thị ghi chú phát hành sau khi Handy cập nhật"
+      "model": {
+        "title": "AI model",
+        "description": "Shared with post-processing: voice commands use this provider and model.",
+        "missing": "Choose a provider, a model and an API key to use voice commands."
+      },
+      "howTo": {
+        "title": "How it works",
+        "select": "Select text in any app — or nothing, to write new text.",
+        "hold": "Hold {{shortcut}} and say what you want.",
+        "release": "Release: the result replaces the selection. Press Escape to stop; the original stays in History.",
+        "privacy": "The selection and your instruction are sent to the AI provider you chose. Secure fields such as passwords are never read."
+      },
+      "examples": {
+        "title": "Try saying",
+        "list": "“Make this a bulleted list”",
+        "translate": "“Translate into English”",
+        "polite": "“Make it more polite”",
+        "summarize": "“Summarize in two sentences”",
+        "email": "“Write an email moving the meeting to Friday”"
+      }
+    },
+    "dictionary": {
+      "title": "Dictionary",
+      "description": "Names and terms Handy should know, and fixes for what it mishears.",
+      "add": {
+        "heardPlaceholder": "Word or name",
+        "heardPlaceholderReplacement": "Heard, e.g. Andy",
+        "writtenPlaceholder": "Write instead (optional)",
+        "button": "Add",
+        "becomes": "becomes",
+        "hint": "Leave the second field empty to teach a word. Fill it in to fix a mishearing, e.g. “Andy” → “Handy”.",
+        "added": "“{{term}}” added to your dictionary"
+      },
+      "errors": {
+        "empty": "Type a word first.",
+        "too_long": "Keep it under 50 characters.",
+        "duplicate": "“{{term}}” is already in your dictionary.",
+        "generic": "Couldn't update the dictionary. Please try again."
+      },
+      "filterPlaceholder": "Search {{count}} entries",
+      "noMatch": "No entry matches “{{query}}”.",
+      "empty": {
+        "title": "Your dictionary is empty",
+        "body": "Add the names, brands and jargon you use. Tip: correct a dictation in History and Handy will offer to learn from it."
+      },
+      "entry": {
+        "remove": "Remove {{term}}",
+        "addedBy": "Added by {{name}} on {{date}}",
+        "addedOn": "Added on {{date}}",
+        "removed": "“{{term}}” removed",
+        "undo": "Undo"
+      },
+      "suggestions": {
+        "title": "Suggestions",
+        "description": "Names that keep coming up in your dictations.",
+        "seen_one": "seen {{count}} time",
+        "seen_other": "seen {{count}} times",
+        "add": "Add",
+        "dismiss": "Ignore",
+        "dismissLabel": "Ignore {{term}}"
+      },
+      "sharing": {
+        "title": "Sharing",
+        "description": "Share your dictionary with someone close through a shared folder or a file.",
+        "author": {
+          "title": "Your name",
+          "description": "Shown next to the words you add, for the people you share with.",
+          "placeholder": "First name"
+        },
+        "folder": {
+          "title": "Shared folder",
+          "description": "Choose the same folder on each Mac, such as a shared iCloud Drive or Dropbox folder. Handy syncs every minute and merges both sides, so no word is lost.",
+          "choose": "Choose folder…",
+          "dialogTitle": "Choose the folder to share your dictionary through",
+          "stop": "Stop",
+          "syncNow": "Sync now",
+          "syncing": "Syncing…",
+          "never": "Not synced yet",
+          "lastSync": "Synced {{time}}",
+          "stopped": "Sync stopped. Your words stay on this Mac."
+        },
+        "syncErrors": {
+          "folder_missing": "Folder not found. Is the drive connected?",
+          "not_downloaded": "iCloud hasn't downloaded the shared file to this Mac yet. Open the folder in Finder to fetch it.",
+          "unreadable": "The shared file can't be read, so it was left untouched.",
+          "write_failed": "Couldn't write to the shared folder. Check that it is writable."
+        },
+        "file": {
+          "title": "File",
+          "description": "Send your dictionary by AirDrop or email. Importing only adds words, it never removes any.",
+          "export": "Export…",
+          "import": "Import…",
+          "filterName": "Handy dictionary",
+          "exported_one": "{{count}} entry exported",
+          "exported_other": "{{count}} entries exported",
+          "imported": "Imported: {{added}} added, {{updated}} updated",
+          "importedNothing": "Nothing new in this file.",
+          "exportError": "Couldn't export the dictionary.",
+          "importError": "This file isn't a Handy dictionary.",
+          "exportNotDictionary": "That file already exists and isn't a Handy dictionary, so it wasn't replaced.",
+          "exportNotJson": "The dictionary must be saved as a .json file."
+        }
       }
     }
   },
@@ -642,6 +879,9 @@
     "portableUpdateButton": "Tải trình cài đặt",
     "portableUpdateBrowseMessage": "Bản cài đặt di động không thể cập nhật tự động. Hãy tải phiên bản mới nhất phù hợp với hệ thống của bạn từ GitHub Releases và cài vào cùng thư mục — thư mục Data/ (cài đặt, mô hình, bản ghi) của bạn được giữ nguyên.",
     "portableUpdateBrowseButton": "Mở GitHub Releases"
+  },
+  "whatsNew": {
+    "title": "Điểm mới trong Handy v{{version}}"
   },
   "common": {
     "loading": "Đang tải...",
@@ -691,10 +931,28 @@
   "overlay": {
     "transcribing": "Đang chuyển đổi...",
     "processing": "Đang xử lý...",
-    "loadingModel": "Đang tải mô hình..."
-  },
-  "whatsNew": {
-    "title": "Điểm mới trong Handy v{{version}}"
+    "processingStyle": "Style: {{style}}",
+    "loadingModel": "Đang tải mô hình...",
+    "command": {
+      "thinking": "Thinking...",
+      "done": {
+        "replaced": "Selection replaced",
+        "inserted": "Text inserted",
+        "copied": "Copied to clipboard",
+        "copied_terminal": "Result copied — paste with ⌘V"
+      },
+      "errors": {
+        "no_llm": "Set up an AI model first",
+        "secure_input": "Secure input is on",
+        "no_instruction": "No instruction heard",
+        "selection_too_long": "Selection is too long",
+        "transcription_failed": "Couldn't transcribe",
+        "llm_failed": "The AI model didn't answer",
+        "paste_failed": "Couldn't paste — copied"
+      }
+    },
+    "noteSaved": "Note saved",
+    "noteFailed": "Note not saved"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} có thể đang chặn 1 phím tắt",
@@ -706,5 +964,350 @@
     "learnMore": "Cách khắc phục",
     "recorderBlocked": "Hiện không thể ghi phím tắt — Secure Input của macOS đang chặn các sự kiện phím. Hãy xử lý cảnh báo Secure Input trước.",
     "dismiss": "Bỏ qua"
+  },
+  "meetings": {
+    "title": "Meetings",
+    "privacy": "Audio is transcribed on this Mac and never saved. Only the text is kept.",
+    "start": {
+      "titlePlaceholder": "Meeting name (optional)",
+      "button": "Start recording",
+      "starting": "Starting…",
+      "hint": "Records your voice and the sound of your Mac, so everyone on the call is transcribed.",
+      "hintMicOnly": "Records your microphone. Capturing the other participants needs macOS 14.2 or later.",
+      "shortcut": "Shortcut: {{shortcut}}"
+    },
+    "live": {
+      "recording": "Recording",
+      "paused": "Paused",
+      "finishing": "Transcribing the last sentences…",
+      "finishingCount_one": "Transcribing the last sentence…",
+      "finishingCount_other": "Transcribing the last {{count}} sentences…",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop",
+      "showTranscript": "Show transcript",
+      "untitled": "Meeting in progress"
+    },
+    "systemAudio": {
+      "denied": "Handy can't hear the other participants: system audio recording was refused. Only your microphone is transcribed.",
+      "unsupported": "Only your microphone is transcribed: capturing the other participants needs macOS 14.2 or later.",
+      "failed": "The sound of your Mac couldn't be captured. Only your microphone is transcribed.",
+      "openSettings": "Open System Settings",
+      "promptHint": "The first time, macOS asks to let Handy record system audio. Allow it so the other participants are transcribed."
+    },
+    "list": {
+      "emptyTitle": "No meetings yet",
+      "emptyBody": "Start recording when your call begins. Handy transcribes everyone as you talk and writes the minutes when you stop.",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "untitled": "Meeting on {{date}}",
+      "status": {
+        "recording": "Recording",
+        "processing": "Transcribing",
+        "summarizing": "Writing minutes",
+        "summary": "Minutes",
+        "transcript": "Transcript only",
+        "interrupted": "Interrupted",
+        "failed": "Minutes failed"
+      },
+      "loadError": "Couldn't load your meetings."
+    },
+    "detail": {
+      "back": "Meetings",
+      "rename": "Rename",
+      "renamePlaceholder": "Meeting name",
+      "tabs": {
+        "summary": "Minutes",
+        "transcript": "Transcript"
+      },
+      "speakers": {
+        "me": "Me",
+        "others": "Participants"
+      },
+      "copySummary": "Copy minutes",
+      "copyTranscript": "Copy transcript",
+      "copied": "Copied",
+      "copyError": "Couldn't copy to the clipboard",
+      "export": "Export as Markdown",
+      "exported": "Saved to {{folder}}",
+      "reveal": "Show in Finder",
+      "chooseFolder": "Choose where to save your meetings",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this meeting?",
+      "deleteConfirmBody": "Its transcript and minutes will be removed from this Mac. This can't be undone.",
+      "cancel": "Cancel",
+      "notFound": "This meeting no longer exists.",
+      "transcriptEmpty": "Nothing was transcribed.",
+      "transcriptWaiting": "Listening… The first sentences appear here a few seconds after they are spoken.",
+      "micOnly": "Microphone only",
+      "withSystemAudio": "Microphone and Mac sound",
+      "interrupted": "Handy stopped during this meeting. The transcript is kept up to that point."
+    },
+    "summary": {
+      "pending": "Writing the minutes…",
+      "inProgress": "The minutes are written when the meeting ends.",
+      "writtenBy": "Written by {{model}}",
+      "regenerate": "Rewrite",
+      "generate": "Write the minutes",
+      "retry": "Try again",
+      "failed": "The minutes couldn't be written.",
+      "empty": "Too little was said to write minutes.",
+      "none": "No minutes for this meeting yet.",
+      "notConfiguredTitle": "Minutes need a language model",
+      "notConfiguredBody": "The transcript is saved. To get a summary, decisions and action items, turn on post-processing in Advanced, then pick a provider (OpenAI, Anthropic, a local model with Ollama, Apple Intelligence…) in Post Process.",
+      "openSettings": "Open settings"
+    },
+    "settings": {
+      "title": "Meeting settings",
+      "autoSummary": {
+        "label": "Write minutes automatically",
+        "description": "When a meeting ends, send its transcript to your post-processing model to get a summary, decisions and action items.",
+        "using": "Uses {{model}}. The transcript is sent there, nowhere else.",
+        "notConfigured": "No language model is set up: meetings keep their transcript only."
+      },
+      "exportDir": {
+        "label": "Export folder",
+        "description": "Where meetings are saved as Markdown files, for example your notes app's folder.",
+        "choose": "Choose…",
+        "none": "Not set"
+      },
+      "autoExport": {
+        "label": "Export every meeting",
+        "description": "Save each finished meeting, with its minutes, as a Markdown file in the export folder."
+      },
+      "retention": {
+        "label": "Keep meetings",
+        "description": "Older meetings are deleted from this Mac automatically.",
+        "forever": "Forever",
+        "days_30": "30 days",
+        "days_90": "90 days",
+        "year": "1 year",
+        "confirmTitle": "Delete older meetings?",
+        "confirmBody": "Meetings older than {{period}} will be deleted from this Mac now, then automatically from now on."
+      },
+      "indicator": {
+        "label": "Floating recording indicator",
+        "description": "A small pill with the elapsed time, pause and stop, at the top right of the screen. Turn it off if it gets in the way of screen sharing."
+      }
+    },
+    "errors": {
+      "no_model": "Download a transcription model first, in Models.",
+      "microphone_permission_denied": "Handy isn't allowed to use the microphone. Allow it in System Settings › Privacy & Security › Microphone.",
+      "no_input_device": "No microphone was found.",
+      "already_recording": "A meeting is already being recorded.",
+      "still_finishing": "The previous meeting is still being transcribed. Try again in a moment.",
+      "not_recording": "No meeting is being recorded.",
+      "meeting_in_progress": "This meeting is still in progress.",
+      "export_dir_missing": "The export folder no longer exists. Choose another one.",
+      "generic": "Something went wrong: {{detail}}"
+    },
+    "indicator": {
+      "recording": "Recording meeting",
+      "paused": "Meeting paused",
+      "open": "Open in Handy",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop and write the minutes"
+    },
+    "calendar": {
+      "title": "Upcoming meetings",
+      "connect": {
+        "body": "Handy can offer to record your video calls a minute before they start, from the events in Calendar (iCloud, Google, Exchange…). Handy only reads your calendar.",
+        "button": "Connect calendar",
+        "connecting": "Connecting…"
+      },
+      "denied": "Handy can't read your calendar, so it can't offer to record your calls.",
+      "openSettings": "Open System Settings",
+      "error": "Something went wrong with the calendar. Please try again.",
+      "notifications": {
+        "denied": "Handy's notifications are turned off: you won't see the offers to record.",
+        "notDetermined": "Allow notifications so Handy can offer to record a minute before each call.",
+        "allow": "Allow notifications",
+        "unavailable": "Offers to record will show up in this window (notifications need the installed app)."
+      },
+      "empty": "No video calls planned between now and tomorrow evening.",
+      "now": "Now",
+      "tomorrow": "Tomorrow",
+      "untitled": "Untitled",
+      "with": "With {{names}}",
+      "withMany": "With {{names}} and {{count}} more",
+      "status": {
+        "ask": "Offered 1 min before",
+        "auto": "Recorded automatically",
+        "recording": "Recording",
+        "skipped": "Skipped",
+        "noAttendees": "No invitees"
+      },
+      "skip": "Skip",
+      "restore": "Undo",
+      "record": "Record",
+      "join": "Join",
+      "prompt": {
+        "soonTitle": "“{{title}}” starts in 1 min",
+        "soonBody": "Record and transcribe this meeting?",
+        "autoBody": "Recording will start automatically.",
+        "endedTitle": "“{{title}}” seems to be over",
+        "endedBody": "Nobody has spoken for a few minutes. Stop recording?",
+        "record": "Record",
+        "ignore": "Ignore",
+        "dontRecord": "Don't record",
+        "stop": "Stop",
+        "keep": "Keep recording"
+      },
+      "settings": {
+        "title": "Calendar",
+        "mode": {
+          "label": "Calendar meetings",
+          "description": "What Handy does a minute before a video call in your calendar. After the scheduled end, once nobody has spoken for a few minutes, Handy offers to stop.",
+          "ask": "Ask",
+          "auto": "Record automatically",
+          "off": "Off"
+        },
+        "onlyVideo": {
+          "label": "Video calls only",
+          "description": "Only events with a Google Meet, Zoom, Teams, Webex or FaceTime link (in the location, notes or URL)."
+        },
+        "skipAlone": {
+          "label": "Skip events without invitees",
+          "description": "Leaves out events where you are the only person invited, such as focus blocks with a link."
+        },
+        "calendars": {
+          "label": "Followed calendars",
+          "description": "Only events from these calendars are offered. New calendars are followed.",
+          "none": "No calendars found. Add your accounts in the Calendar app."
+        }
+      }
+    }
+  },
+  "notes": {
+    "title": "Notes",
+    "searchPlaceholder": "Search notes",
+    "clearSearch": "Clear search",
+    "settingsButton": "Notes settings",
+    "back": "Back to notes",
+    "loading": "Loading notes…",
+    "loadError": "Couldn't load your notes.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "count_one": "{{count}} note",
+    "count_other": "{{count}} notes",
+    "noResults": "No notes match “{{query}}”.",
+    "empty": {
+      "title": "No notes yet",
+      "description": "Press {{shortcut}}, say what's on your mind, and it lands here. Nothing gets typed in the app you're using."
+    },
+    "disabled": {
+      "title": "Voice notes are off",
+      "description": "Turn them on to capture a thought with a dedicated shortcut, without typing it anywhere.",
+      "enable": "Turn on"
+    },
+    "row": {
+      "expand": "Show the full note",
+      "collapse": "Collapse",
+      "aiProcessed": "Title and cleanup by AI",
+      "showOriginal": "Show what you said",
+      "hideOriginal": "Hide what you said",
+      "exportProblem": "A destination could not be updated"
+    },
+    "actions": {
+      "copy": "Copy",
+      "open": "Open",
+      "delete": "Delete",
+      "retry": "Retry"
+    },
+    "toasts": {
+      "deleted": "Note deleted",
+      "undo": "Undo",
+      "deleteLeftUntouched": "Note deleted from Handy. Its journal file was edited by hand, so it was left as is.",
+      "deleteError": "Couldn't delete the note.",
+      "openError": "Couldn't open the note.",
+      "copyError": "Couldn't copy the note.",
+      "retryError": "Couldn't retry.",
+      "saveError": "Couldn't save the setting."
+    },
+    "destinations": {
+      "markdown": "Markdown",
+      "notion": "Notion",
+      "apple_notes": "Apple Notes",
+      "pending": "{{name}}: sending…",
+      "done": "{{name}}: open",
+      "failed": "{{name}}: failed"
+    },
+    "errors": {
+      "permission_denied": "Handy can't write to this folder. Allow access in System Settings › Privacy & Security › Files and Folders.",
+      "io": "The note couldn't be written to the folder.",
+      "notion_invalid_token": "Notion rejected the token. Check it in your integration settings.",
+      "notion_page_not_found": "Notion can't see this page. Open it in Notion, then ••• › Connections › add your integration.",
+      "notion_invalid_page_link": "This doesn't look like a Notion page link.",
+      "notion_network": "Couldn't reach Notion. Check your connection.",
+      "notion_api": "Notion returned an error.",
+      "notion_token_missing": "Notion is no longer connected. Reconnect it in the notes settings.",
+      "notion_keychain": "Couldn't store the token securely.",
+      "apple_notes_denied": "Handy isn't allowed to control Notes. Allow it in System Settings › Privacy & Security › Automation.",
+      "apple_notes_failed": "Apple Notes returned an error.",
+      "generic": "Something went wrong."
+    },
+    "settings": {
+      "title": "Notes settings",
+      "capture": {
+        "title": "Capture",
+        "enabled": {
+          "label": "Voice notes",
+          "description": "A dedicated shortcut that saves what you say as a note instead of typing it."
+        },
+        "ai": {
+          "label": "AI title and cleanup",
+          "description": "Gives each note a title and removes hesitations, using your post-processing provider. Your words and your language are kept.",
+          "using": "Uses {{provider}}.",
+          "unavailableDisabled": "Turn on post-processing (Advanced › Experimental) and choose a provider to use this. Until then, the title comes from your first words.",
+          "unavailableNoProvider": "Choose a provider, model and API key in Post Process to use this. Until then, the title comes from your first words."
+        }
+      },
+      "markdown": {
+        "title": "Markdown folder",
+        "enabled": {
+          "label": "Save to a folder",
+          "description": "Plain Markdown files you can open in Obsidian, iA Writer or any editor."
+        },
+        "folder": {
+          "label": "Folder",
+          "description": "Where notes are written. Defaults to Documents › Handy Notes.",
+          "choose": "Choose…",
+          "reset": "Use default",
+          "open": "Open"
+        },
+        "layout": {
+          "label": "Files",
+          "description": "A journal file per day with one section per note, or one file per note.",
+          "daily": "One per day",
+          "per_note": "One per note"
+        }
+      },
+      "notion": {
+        "title": "Notion",
+        "description": "Each note becomes a page under a page you choose.",
+        "token": {
+          "label": "Integration token",
+          "placeholder": "ntn_…",
+          "help": "Create an internal integration at notion.so/profile/integrations, copy its token, then add the integration to the parent page (••• › Connections)."
+        },
+        "page": {
+          "label": "Parent page",
+          "placeholder": "Paste the page link"
+        },
+        "connect": "Connect",
+        "connecting": "Checking…",
+        "connected": "Notes go to “{{page}}”.",
+        "connectedUntitled": "Connected.",
+        "disconnect": "Disconnect",
+        "keychain": "The token is kept in your Keychain (or a file only you can read), never in Handy's settings file."
+      },
+      "appleNotes": {
+        "title": "Apple Notes",
+        "label": "Add to Apple Notes",
+        "description": "Each note is also added to a “Handy” folder in Notes. macOS asks for permission the first time.",
+        "openSettings": "Open System Settings"
+      }
+    }
   }
 }

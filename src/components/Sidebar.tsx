@@ -1,6 +1,18 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, History, Info, Sparkles, Cpu } from "lucide-react";
+import {
+  BookA,
+  ChartColumn,
+  Cog,
+  FlaskConical,
+  History,
+  Info,
+  NotebookPen,
+  Sparkles,
+  Cpu,
+  Users,
+  WandSparkles,
+} from "lucide-react";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import HandyHand from "./icons/HandyHand";
 import { useSettings } from "../hooks/useSettings";
@@ -8,10 +20,15 @@ import {
   GeneralSettings,
   AdvancedSettings,
   HistorySettings,
+  DictionarySettings,
+  StatsSettings,
   DebugSettings,
   AboutSettings,
   PostProcessingSettings,
   ModelsSettings,
+  MeetingsSettings,
+  VoiceCommandsSettings,
+  NotesSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -42,6 +59,36 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.history",
     icon: History,
     component: HistorySettings,
+    enabled: () => true,
+  },
+  meetings: {
+    labelKey: "sidebar.meetings",
+    icon: Users,
+    component: MeetingsSettings,
+    enabled: () => true,
+  },
+  notes: {
+    labelKey: "sidebar.notes",
+    icon: NotebookPen,
+    component: NotesSettings,
+    enabled: () => true,
+  },
+  voicecommands: {
+    labelKey: "sidebar.voiceCommands",
+    icon: WandSparkles,
+    component: VoiceCommandsSettings,
+    enabled: () => true,
+  },
+  dictionary: {
+    labelKey: "sidebar.dictionary",
+    icon: BookA,
+    component: DictionarySettings,
+    enabled: () => true,
+  },
+  stats: {
+    labelKey: "sidebar.stats",
+    icon: ChartColumn,
+    component: StatsSettings,
     enabled: () => true,
   },
   models: {

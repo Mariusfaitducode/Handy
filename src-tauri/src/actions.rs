@@ -5,6 +5,7 @@ use crate::audio_toolkit::VadPolicy;
 use crate::managers::audio::{recording_error_type, AudioRecordingManager};
 use crate::managers::history::HistoryManager;
 use crate::managers::model::ModelManager;
+use crate::managers::stats::{self, StatsManager};
 use crate::managers::transcription::policy::{live_decode, LiveDecode, ModelTraits};
 use crate::managers::transcription::StreamWorkKind;
 use crate::managers::transcription::TranscriptionManager;
@@ -25,6 +26,8 @@ use tauri::Manager;
 use tauri::{AppHandle, Emitter};
 
 const CANCELLATION_POLL_INTERVAL: Duration = Duration::from_millis(25);
+/// How long the overlay shows "Note saved" before fading out.
+const VOICE_NOTE_CONFIRMATION: Duration = Duration::from_millis(1400);
 
 #[derive(Clone, serde::Serialize)]
 struct RecordingErrorEvent {
@@ -34,7 +37,7 @@ struct RecordingErrorEvent {
 
 /// Drop guard that finishes the transcription pipeline, including immediate
 /// model unloading on early exits.
-struct FinishGuard(AppHandle, Arc<TranscriptionManager>);
+pub(crate) struct FinishGuard(pub(crate) AppHandle, pub(crate) Arc<TranscriptionManager>);
 impl Drop for FinishGuard {
     fn drop(&mut self) {
         self.1.maybe_unload_immediately("transcription session");
@@ -57,13 +60,15 @@ pub trait ShortcutAction: Send + Sync {
 // Transcribe Action
 struct TranscribeAction {
     post_process: bool,
+    /// Save the transcript as a voice note instead of pasting it.
+    voice_note: bool,
 }
 
 /// Field name for structured output JSON schema
 const TRANSCRIPTION_FIELD: &str = "transcription";
 
 /// Strip invisible Unicode characters that some LLMs may insert
-fn strip_invisible_chars(s: &str) -> String {
+pub(crate) fn strip_invisible_chars(s: &str) -> String {
     s.replace(['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'], "")
 }
 
@@ -71,7 +76,7 @@ fn strip_invisible_chars(s: &str) -> String {
 /// reasoning, and some local servers put the reasoning text into `content`
 /// instead of a separate field — without this the user would get the model's
 /// chain of thought pasted along with the cleaned transcription.
-fn strip_think_block(s: &str) -> &str {
+pub(crate) fn strip_think_block(s: &str) -> &str {
     if let Some(rest) = s.trim_start().strip_prefix("<think>") {
         if let Some(end) = rest.find("</think>") {
             return rest[end + "</think>".len()..].trim_start();
@@ -95,7 +100,10 @@ fn is_blank_transcription(transcription: &str) -> bool {
     transcription.trim().is_empty()
 }
 
-async fn complete_unless_cancelled<F, C>(operation: F, is_cancelled: C) -> Option<F::Output>
+pub(crate) async fn complete_unless_cancelled<F, C>(
+    operation: F,
+    is_cancelled: C,
+) -> Option<F::Output>
 where
     F: Future,
     C: Fn() -> bool,
@@ -119,7 +127,11 @@ fn should_use_streaming_overlay(style: OverlayStyle, is_streaming: bool) -> bool
     style == OverlayStyle::Live && is_streaming
 }
 
-async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
+async fn post_process_transcription(
+    settings: &AppSettings,
+    transcription: &str,
+    prompt_id: Option<&str>,
+) -> Option<String> {
     if is_blank_transcription(transcription) {
         debug!("Post-processing skipped because the transcription is empty");
         return None;
@@ -147,8 +159,13 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
         return None;
     }
 
-    let selected_prompt_id = match &settings.post_process_selected_prompt_id {
-        Some(id) => id.clone(),
+    // An app-specific style (see app_styles) takes precedence over the
+    // prompt selected in settings.
+    let selected_prompt_id = match prompt_id
+        .map(str::to_string)
+        .or_else(|| settings.post_process_selected_prompt_id.clone())
+    {
+        Some(id) => id,
         None => {
             debug!("Post-processing skipped because no prompt is selected");
             return None;
@@ -355,6 +372,7 @@ pub(crate) async fn process_transcription_output(
     app: &AppHandle,
     transcription: &str,
     post_process: bool,
+    style_prompt_id: Option<String>,
 ) -> ProcessedTranscription {
     let settings = get_settings(app);
     let mut final_text = transcription.to_string();
@@ -362,11 +380,15 @@ pub(crate) async fn process_transcription_output(
     let mut post_process_prompt: Option<String> = None;
 
     if post_process {
-        if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
+        let prompt_id =
+            style_prompt_id.or_else(|| settings.post_process_selected_prompt_id.clone());
+        if let Some(processed_text) =
+            post_process_transcription(&settings, &final_text, prompt_id.as_deref()).await
+        {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 
-            if let Some(prompt_id) = &settings.post_process_selected_prompt_id {
+            if let Some(prompt_id) = &prompt_id {
                 if let Some(prompt) = settings
                     .post_process_prompts
                     .iter()
@@ -463,7 +485,13 @@ impl ShortcutAction for TranscribeAction {
         // pill instead of an oversized transparent live window.
         let overlay_started = Instant::now();
         match settings.overlay_style {
+            OverlayStyle::Live if model_supports_streaming && self.voice_note => {
+                utils::show_note_streaming_overlay(app)
+            }
             OverlayStyle::Live if model_supports_streaming => utils::show_streaming_overlay(app),
+            OverlayStyle::Live | OverlayStyle::Minimal if self.voice_note => {
+                utils::show_note_recording_overlay(app)
+            }
             OverlayStyle::Live | OverlayStyle::Minimal => show_recording_overlay(app),
             OverlayStyle::None => {} // show_overlay_state no-ops on None anyway
         }
@@ -578,6 +606,9 @@ impl ShortcutAction for TranscribeAction {
         let rm = Arc::clone(&app.state::<Arc<AudioRecordingManager>>());
         let tm = Arc::clone(&app.state::<Arc<TranscriptionManager>>());
         let hm = Arc::clone(&app.state::<Arc<HistoryManager>>());
+        let sm = Arc::clone(&app.state::<Arc<StatsManager>>());
+        // The app in front now is the one the text will be pasted into.
+        let target_app = stats::frontmost_app_name();
 
         set_tray_state(app, TrayIconState::Transcribing);
         // Stop should give immediate visual feedback. Live streaming can keep
@@ -602,6 +633,7 @@ impl ShortcutAction for TranscribeAction {
 
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
         let post_process = self.post_process;
+        let voice_note = self.voice_note;
         let cancel_generation = rm.cancel_generation();
 
         tauri::async_runtime::spawn(async move {
@@ -691,7 +723,89 @@ impl ShortcutAction for TranscribeAction {
                                 utils::redact_text(&transcription)
                             );
 
+                            if voice_note {
+                                if wav_saved {
+                                    if let Err(err) = hm.save_entry(
+                                        file_name,
+                                        transcription.clone(),
+                                        false,
+                                        None,
+                                        None,
+                                    ) {
+                                        error!("Failed to save history entry: {}", err);
+                                    }
+                                }
+                                if crate::notes::will_use_llm(&ah) {
+                                    if use_streaming_overlay {
+                                        tm.emit_stream_working(StreamWorkKind::Polishing);
+                                    } else {
+                                        show_processing_overlay(&ah);
+                                    }
+                                }
+                                let prepared = complete_unless_cancelled(
+                                    crate::notes::prepare_draft(&ah, &transcription),
+                                    || rm.was_cancelled_since(cancel_generation),
+                                )
+                                .await;
+                                let Some((draft, ai_processed)) =
+                                    prepared.filter(|_| !rm.was_cancelled_since(cancel_generation))
+                                else {
+                                    debug!("Voice note cancelled before saving");
+                                    utils::hide_recording_overlay(&ah);
+                                    set_tray_state(&ah, TrayIconState::Idle);
+                                    return;
+                                };
+                                match crate::notes::save(&ah, &transcription, draft, ai_processed) {
+                                    crate::notes::CaptureOutcome::Saved => {
+                                        // A saved note is dictated words too: count
+                                        // them in Statistics, with no target app
+                                        // since nothing was pasted anywhere.
+                                        let settings = get_settings(&ah);
+                                        let duration_ms = (sample_count as u64 * 1000
+                                            / crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE
+                                                as u64)
+                                            as i64;
+                                        sm.record_dictation(
+                                            &transcription,
+                                            Some(duration_ms),
+                                            None,
+                                            &settings.selected_language,
+                                            settings.translate_to_english,
+                                        );
+                                        utils::flash_overlay_state(
+                                            &ah,
+                                            "note_saved",
+                                            VOICE_NOTE_CONFIRMATION,
+                                        );
+                                    }
+                                    crate::notes::CaptureOutcome::Empty => {
+                                        utils::hide_recording_overlay(&ah);
+                                    }
+                                    crate::notes::CaptureOutcome::Failed => {
+                                        utils::flash_overlay_state(
+                                            &ah,
+                                            "note_failed",
+                                            VOICE_NOTE_CONFIRMATION,
+                                        );
+                                    }
+                                }
+                                set_tray_state(&ah, TrayIconState::Idle);
+                                return;
+                            }
+
+                            // Style by app: look at the app the text is about to be
+                            // pasted into. Only for post-processed dictations, so
+                            // this costs nothing when post-processing is off.
+                            let style = if post_process {
+                                crate::app_styles::detect_and_resolve(&ah, &get_settings(&ah))
+                            } else {
+                                crate::app_styles::AppliedStyle {
+                                    prompt_id: None,
+                                    label: None,
+                                }
+                            };
                             if post_process {
+                                utils::emit_overlay_style(&ah, style.label.clone());
                                 if use_streaming_overlay {
                                     tm.emit_stream_working(StreamWorkKind::Polishing);
                                 } else {
@@ -699,7 +813,12 @@ impl ShortcutAction for TranscribeAction {
                                 }
                             }
                             let Some(processed) = complete_unless_cancelled(
-                                process_transcription_output(&ah, &transcription, post_process),
+                                process_transcription_output(
+                                    &ah,
+                                    &transcription,
+                                    post_process,
+                                    style.prompt_id,
+                                ),
                                 || rm.was_cancelled_since(cancel_generation),
                             )
                             .await
@@ -715,6 +834,20 @@ impl ShortcutAction for TranscribeAction {
                                 utils::hide_recording_overlay(&ah);
                                 set_tray_state(&ah, TrayIconState::Idle);
                                 return;
+                            }
+
+                            {
+                                let settings = get_settings(&ah);
+                                let duration_ms = (sample_count as u64 * 1000
+                                    / crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE as u64)
+                                    as i64;
+                                sm.record_dictation(
+                                    &processed.final_text,
+                                    Some(duration_ms),
+                                    target_app.clone(),
+                                    &settings.selected_language,
+                                    settings.translate_to_english,
+                                );
                             }
 
                             // Save to history if WAV was saved
@@ -849,6 +982,24 @@ impl ShortcutAction for TestAction {
     }
 }
 
+// Meeting Action: one press starts a meeting, the next one stops it.
+struct ToggleMeetingAction;
+
+impl ShortcutAction for ToggleMeetingAction {
+    fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        let app = app.clone();
+        // Opening the microphone can take a moment; keep the shortcut thread free.
+        std::thread::spawn(move || {
+            crate::meeting::toggle_meeting_reporting_errors(
+                &app,
+                crate::meeting::MeetingSource::Shortcut,
+            );
+        });
+    }
+
+    fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {}
+}
+
 // Static Action Map
 pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::new(|| {
     let mut map = HashMap::new();
@@ -856,15 +1007,34 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         "transcribe".to_string(),
         Arc::new(TranscribeAction {
             post_process: false,
+            voice_note: false,
         }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "transcribe_with_post_process".to_string(),
-        Arc::new(TranscribeAction { post_process: true }) as Arc<dyn ShortcutAction>,
+        Arc::new(TranscribeAction {
+            post_process: true,
+            voice_note: false,
+        }) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        crate::notes::VOICE_NOTE_BINDING.to_string(),
+        Arc::new(TranscribeAction {
+            post_process: false,
+            voice_note: true,
+        }) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        crate::settings::VOICE_COMMAND_BINDING_ID.to_string(),
+        Arc::new(crate::voice_command::VoiceCommandAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "cancel".to_string(),
         Arc::new(CancelAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        "toggle_meeting".to_string(),
+        Arc::new(ToggleMeetingAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "test".to_string(),

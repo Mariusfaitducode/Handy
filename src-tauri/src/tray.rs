@@ -63,6 +63,17 @@ struct MenuInputs {
     downloaded_models: Vec<(String, String)>,
     locale: String,
     update_checks_enabled: bool,
+    meeting: TrayMeeting,
+}
+
+/// The meeting part of the menu: start, or pause/resume and stop.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TrayMeeting {
+    Idle,
+    Recording,
+    Paused,
+    /// Finishing the previous meeting: nothing to offer yet.
+    Busy,
 }
 
 /// Complete description of what the tray should look like.
@@ -324,8 +335,23 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
         .collect();
     downloaded_models.sort_by(|a, b| a.1.cmp(&b.1));
 
+    let meeting = match crate::meeting::current_status(app).phase {
+        crate::meeting::MeetingPhase::Idle => TrayMeeting::Idle,
+        crate::meeting::MeetingPhase::Recording => TrayMeeting::Recording,
+        crate::meeting::MeetingPhase::Paused => TrayMeeting::Paused,
+        crate::meeting::MeetingPhase::Finishing => TrayMeeting::Busy,
+    };
+    // A meeting shows the recording icon even while no dictation runs.
+    let shown_state = if icon_state == TrayIconState::Idle
+        && matches!(meeting, TrayMeeting::Recording | TrayMeeting::Paused)
+    {
+        TrayIconState::Recording
+    } else {
+        icon_state
+    };
+
     TrayDesired {
-        icon_path: get_icon_path(theme, icon_state, warning),
+        icon_path: get_icon_path(theme, shown_state, warning),
         menu: MenuInputs {
             busy: icon_state.is_busy(),
             warning,
@@ -334,6 +360,7 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
             downloaded_models,
             locale: settings.app_language,
             update_checks_enabled: settings.update_checks_enabled,
+            meeting,
         },
     }
 }
@@ -582,6 +609,67 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
         menu.remove(&check_updates_i)?;
     }
 
+    // Meeting controls sit right under the version line in both layouts.
+    // Locales without these strings yet fall back to English.
+    let english = get_tray_translations(Some("en".to_string()));
+    let or_english = |value: &str, fallback: &str| {
+        if value.is_empty() {
+            fallback.to_string()
+        } else {
+            value.to_string()
+        }
+    };
+    let meeting_items: Vec<MenuItem<tauri::Wry>> = match inputs.meeting {
+        TrayMeeting::Idle => vec![MenuItem::with_id(
+            app,
+            "meeting_start",
+            or_english(&strings.start_meeting, &english.start_meeting),
+            true,
+            None::<&str>,
+        )?],
+        TrayMeeting::Recording => vec![
+            MenuItem::with_id(
+                app,
+                "meeting_pause",
+                or_english(&strings.pause_meeting, &english.pause_meeting),
+                true,
+                None::<&str>,
+            )?,
+            MenuItem::with_id(
+                app,
+                "meeting_stop",
+                or_english(&strings.stop_meeting, &english.stop_meeting),
+                true,
+                None::<&str>,
+            )?,
+        ],
+        TrayMeeting::Paused => vec![
+            MenuItem::with_id(
+                app,
+                "meeting_resume",
+                or_english(&strings.resume_meeting, &english.resume_meeting),
+                true,
+                None::<&str>,
+            )?,
+            MenuItem::with_id(
+                app,
+                "meeting_stop",
+                or_english(&strings.stop_meeting, &english.stop_meeting),
+                true,
+                None::<&str>,
+            )?,
+        ],
+        TrayMeeting::Busy => Vec::new(),
+    };
+    if !meeting_items.is_empty() {
+        let mut position = 2;
+        for item in &meeting_items {
+            menu.insert(item, position)?;
+            position += 1;
+        }
+        menu.insert(&separator()?, position)?;
+    }
+
     // Both layouts start with [version, separator, ...]; slot the warning in
     // right below the version line so it's the first actionable thing seen.
     let mut tooltip = version_label;
@@ -682,6 +770,8 @@ mod tests {
             post_processed_text: post_processed.map(|text| text.to_string()),
             post_process_prompt: None,
             post_process_requested: false,
+            voice_command: false,
+            command_source_text: None,
         }
     }
 
@@ -694,6 +784,7 @@ mod tests {
             downloaded_models: vec![("small".to_string(), "Small".to_string())],
             locale: "en".to_string(),
             update_checks_enabled: true,
+            meeting: super::TrayMeeting::Idle,
         }
     }
 

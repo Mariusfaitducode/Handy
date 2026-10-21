@@ -53,6 +53,7 @@
   --ov-rest-w: 172px; /* resting compact pill (minimal, recording) -- roomy enough
                          for the English working label before the grow starts */
   --ov-pill-w: 184px; /* base width / Live pill before it opens or collapses */
+  --ov-msg-w: 248px; /* voice command messages (errors), within the 256px window */
   --ov-work-w: 216px; /* working pill (transcribing / polishing) -- wide enough to
                          center longer labels; shared by Live (collapsed) + minimal */
   --ov-open-w: 392px; /* Live panel, expanded */
@@ -344,6 +345,46 @@
     box-shadow: 0 0 0 7px transparent;
   }
 }
+/* Voice note mark: replaces the dot, same arming/ready treatment. */
+.snote {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  margin-left: -3px;
+  transition:
+    color 180ms ease,
+    opacity 180ms ease;
+}
+.snote.ready {
+  color: var(--s-accent);
+}
+.snote.arming {
+  color: var(--s-muted);
+  opacity: 0.45;
+}
+/* Voice note confirmation glyph ("Note saved" / "Note not saved"). */
+.sconfirm {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  animation: sconfirm-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sconfirm.ok {
+  color: var(--s-accent);
+}
+.sconfirm.fail {
+  color: var(--s-muted);
+}
+@keyframes sconfirm-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .stimer {
   font-size: 12px;
   color: var(--s-faint);
@@ -468,4 +509,32 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Voice command pill: same card, a glyph in the dot's place. */
+.scard.compact.cmsg {
+  width: var(--ov-msg-w);
+}
+.sglyph {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  display: block;
+  transition:
+    color 180ms ease,
+    opacity 180ms ease;
+}
+.sglyph.wand,
+.sglyph.check {
+  color: var(--s-accent);
+}
+.sglyph.wand.arming {
+  color: var(--s-muted);
+  opacity: 0.55;
+}
+.sglyph.alert {
+  color: var(--s-muted);
+}
+.scard.command .swork-label {
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
 }

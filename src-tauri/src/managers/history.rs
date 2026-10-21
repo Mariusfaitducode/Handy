@@ -31,6 +31,13 @@ static MIGRATIONS: &[M] = &[
     M::up("ALTER TABLE transcription_history ADD COLUMN post_processed_text TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_prompt TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_requested BOOLEAN NOT NULL DEFAULT 0;"),
+    // Voice commands: the spoken instruction lives in transcription_text, the
+    // LLM result in post_processed_text, and the text that was selected when
+    // the command ran (NULL when it wrote new text) in command_source_text.
+    M::up(
+        "ALTER TABLE transcription_history ADD COLUMN voice_command BOOLEAN NOT NULL DEFAULT 0;
+         ALTER TABLE transcription_history ADD COLUMN command_source_text TEXT;",
+    ),
 ];
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type)]
@@ -63,6 +70,10 @@ pub struct HistoryEntry {
     pub post_processed_text: Option<String>,
     pub post_process_prompt: Option<String>,
     pub post_process_requested: bool,
+    /// True for voice command entries (instruction → result).
+    pub voice_command: bool,
+    /// Voice commands only: the selection the instruction was applied to.
+    pub command_source_text: Option<String>,
 }
 
 pub struct HistoryManager {
@@ -207,6 +218,8 @@ impl HistoryManager {
             post_processed_text: row.get("post_processed_text")?,
             post_process_prompt: row.get("post_process_prompt")?,
             post_process_requested: row.get("post_process_requested")?,
+            voice_command: row.get("voice_command")?,
+            command_source_text: row.get("command_source_text")?,
         })
     }
 
@@ -224,6 +237,49 @@ impl HistoryManager {
         post_processed_text: Option<String>,
         post_process_prompt: Option<String>,
     ) -> Result<HistoryEntry> {
+        self.insert_entry(
+            file_name,
+            transcription_text,
+            post_process_requested,
+            post_processed_text,
+            post_process_prompt,
+            false,
+            None,
+        )
+    }
+
+    /// Save a voice command: the spoken `instruction`, the LLM `result` (None
+    /// when the command failed, so it can be retried from history) and the
+    /// `source_text` it was applied to (None when it wrote new text).
+    pub fn save_voice_command_entry(
+        &self,
+        file_name: String,
+        instruction: String,
+        result: Option<String>,
+        source_text: Option<String>,
+    ) -> Result<HistoryEntry> {
+        self.insert_entry(
+            file_name,
+            instruction,
+            false,
+            result,
+            None,
+            true,
+            source_text,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn insert_entry(
+        &self,
+        file_name: String,
+        transcription_text: String,
+        post_process_requested: bool,
+        post_processed_text: Option<String>,
+        post_process_prompt: Option<String>,
+        voice_command: bool,
+        command_source_text: Option<String>,
+    ) -> Result<HistoryEntry> {
         let timestamp = Utc::now().timestamp();
         let title = self.format_timestamp_title(timestamp);
 
@@ -237,8 +293,10 @@ impl HistoryManager {
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                post_process_requested,
+                voice_command,
+                command_source_text
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             params![
                 &file_name,
                 timestamp,
@@ -248,6 +306,8 @@ impl HistoryManager {
                 &post_processed_text,
                 &post_process_prompt,
                 post_process_requested,
+                voice_command,
+                &command_source_text,
             ],
         )?;
 
@@ -261,6 +321,8 @@ impl HistoryManager {
             post_processed_text,
             post_process_prompt,
             post_process_requested,
+            voice_command,
+            command_source_text,
         };
 
         debug!("Saved history entry with id {}", entry.id);
@@ -308,7 +370,7 @@ impl HistoryManager {
 
         let entry = conn
             .query_row(
-                "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, voice_command, command_source_text
                  FROM transcription_history WHERE id = ?1",
                 params![id],
                 Self::map_history_entry,
@@ -325,6 +387,45 @@ impl HistoryManager {
         }
 
         Ok(entry)
+    }
+
+    /// Replace an entry's text with the user's correction.
+    pub fn update_transcription_text(&self, id: i64, text: &str) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let updated = conn.execute(
+            "UPDATE transcription_history SET transcription_text = ?1 WHERE id = ?2",
+            params![text, id],
+        )?;
+        if updated == 0 {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+        let entry = conn.query_row(
+            "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+             FROM transcription_history WHERE id = ?1",
+            params![id],
+            Self::map_history_entry,
+        )?;
+        if let Err(e) = (HistoryUpdatePayload::Updated {
+            entry: entry.clone(),
+        })
+        .emit(&self.app_handle)
+        {
+            error!("Failed to emit history-updated event: {}", e);
+        }
+        Ok(entry)
+    }
+
+    /// Texts of the most recent non-empty transcriptions, newest first.
+    pub fn recent_transcriptions(&self, limit: usize) -> Result<Vec<String>> {
+        let conn = self.get_connection()?;
+        let mut stmt = conn.prepare(
+            "SELECT transcription_text FROM transcription_history
+             WHERE transcription_text != '' ORDER BY id DESC LIMIT ?1",
+        )?;
+        let texts = stmt
+            .query_map(params![limit as i64], |row| row.get::<_, String>(0))?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(texts)
     }
 
     pub fn cleanup_old_entries(&self) -> Result<()> {
@@ -459,7 +560,7 @@ impl HistoryManager {
             (Some(cursor_id), Some(lim)) => {
                 let fetch_count = (lim + 1) as i64;
                 let mut stmt = conn.prepare(
-                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, voice_command, command_source_text
                      FROM transcription_history
                      WHERE id < ?1
                      ORDER BY id DESC
@@ -473,7 +574,7 @@ impl HistoryManager {
             (None, Some(lim)) => {
                 let fetch_count = (lim + 1) as i64;
                 let mut stmt = conn.prepare(
-                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, voice_command, command_source_text
                      FROM transcription_history
                      ORDER BY id DESC
                      LIMIT ?1",
@@ -485,7 +586,7 @@ impl HistoryManager {
             }
             (_, None) => {
                 let mut stmt = conn.prepare(
-                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+                    "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested, voice_command, command_source_text
                      FROM transcription_history
                      ORDER BY id DESC",
                 )?;
@@ -516,7 +617,9 @@ impl HistoryManager {
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
+                post_process_requested,
+                voice_command,
+                command_source_text
              FROM transcription_history
              ORDER BY timestamp DESC
              LIMIT 1",
@@ -543,9 +646,11 @@ impl HistoryManager {
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
+                post_process_requested,
+                voice_command,
+                command_source_text
              FROM transcription_history
-             WHERE transcription_text != ''
+             WHERE transcription_text != '' AND voice_command = 0
              ORDER BY timestamp DESC
              LIMIT 1",
         )?;
@@ -597,7 +702,9 @@ impl HistoryManager {
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
-                post_process_requested
+                post_process_requested,
+                voice_command,
+                command_source_text
              FROM transcription_history
              WHERE id = ?1",
         )?;
@@ -655,21 +762,11 @@ mod tests {
     use rusqlite::{params, Connection};
 
     fn setup_conn() -> Connection {
-        let conn = Connection::open_in_memory().expect("open in-memory db");
-        conn.execute_batch(
-            "CREATE TABLE transcription_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                file_name TEXT NOT NULL,
-                timestamp INTEGER NOT NULL,
-                saved BOOLEAN NOT NULL DEFAULT 0,
-                title TEXT NOT NULL,
-                transcription_text TEXT NOT NULL,
-                post_processed_text TEXT,
-                post_process_prompt TEXT,
-                post_process_requested BOOLEAN NOT NULL DEFAULT 0
-            );",
-        )
-        .expect("create transcription_history table");
+        let mut conn = Connection::open_in_memory().expect("open in-memory db");
+        // Run the real migrations so the tests also cover the schema history.
+        Migrations::new(MIGRATIONS.to_vec())
+            .to_latest(&mut conn)
+            .expect("apply history migrations");
         conn
     }
 
@@ -733,5 +830,51 @@ mod tests {
 
         assert_eq!(entry.timestamp, 100);
         assert_eq!(entry.transcription_text, "completed");
+    }
+
+    #[test]
+    fn migrations_are_valid() {
+        Migrations::new(MIGRATIONS.to_vec())
+            .validate()
+            .expect("history migrations validate");
+    }
+
+    #[test]
+    fn plain_entries_default_to_dictation() {
+        let conn = setup_conn();
+        insert_entry(&conn, 100, "dictated", None);
+
+        let entry = HistoryManager::get_latest_entry_with_conn(&conn)
+            .expect("fetch latest entry")
+            .expect("entry exists");
+
+        assert!(!entry.voice_command);
+        assert_eq!(entry.command_source_text, None);
+    }
+
+    #[test]
+    fn latest_completed_entry_skips_voice_commands() {
+        // "Paste last transcript" must never paste a spoken instruction.
+        let conn = setup_conn();
+        insert_entry(&conn, 100, "dictated", None);
+        conn.execute(
+            "INSERT INTO transcription_history (
+                file_name, timestamp, saved, title, transcription_text,
+                post_processed_text, voice_command, command_source_text
+            ) VALUES ('c.wav', 200, 0, 'c', 'make it a list', '- a', 1, 'a')",
+            [],
+        )
+        .expect("insert voice command");
+
+        let latest = HistoryManager::get_latest_entry_with_conn(&conn)
+            .expect("fetch latest entry")
+            .expect("entry exists");
+        assert!(latest.voice_command);
+        assert_eq!(latest.command_source_text.as_deref(), Some("a"));
+
+        let completed = HistoryManager::get_latest_completed_entry_with_conn(&conn)
+            .expect("fetch latest completed entry")
+            .expect("completed entry exists");
+        assert_eq!(completed.transcription_text, "dictated");
     }
 }
