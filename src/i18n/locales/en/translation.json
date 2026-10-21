@@ -549,6 +549,8 @@
           "imported": "Imported: {{added}} added, {{updated}} updated",
           "importedNothing": "Nothing new in this file.",
           "exportError": "Couldn't export the dictionary.",
+          "exportNotDictionary": "That file already exists and isn't a Handy dictionary, so it wasn't replaced.",
+          "exportNotJson": "The dictionary must be saved as a .json file.",
           "importError": "This file isn't a Handy dictionary."
         }
       }

@@ -977,9 +977,21 @@ async setDictionaryAuthor(name: string) : Promise<Result<DictionarySnapshot, str
     else return { status: "error", error: e  as any };
 }
 },
-async setDictionarySyncFolder(folder: string | null) : Promise<Result<DictionarySnapshot, string>> {
+/**
+ * Lets the user pick the shared folder, then syncs with it. `None` if the
+ * dialog was cancelled. `title` is the dialog's (translated) title.
+ */
+async chooseDictionarySyncFolder(title: string) : Promise<Result<DictionarySnapshot | null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("set_dictionary_sync_folder", { folder }) };
+    return { status: "ok", data: await TAURI_INVOKE("choose_dictionary_sync_folder", { title }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async stopDictionarySync() : Promise<Result<DictionarySnapshot, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("stop_dictionary_sync") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -994,22 +1006,26 @@ async syncDictionaryNow() : Promise<Result<DictionarySnapshot, string>> {
 }
 },
 /**
- * Writes the live entries to `path`; returns how many were exported.
+ * Asks where to save, then writes the live entries there. Returns how many
+ * were exported, or `None` if the dialog was cancelled. Errors are codes the
+ * UI translates: `not_json`, `not_a_dictionary` (refusing to replace a file
+ * that is not an earlier export), otherwise `write_failed: …`.
  */
-async exportDictionary(path: string) : Promise<Result<number, string>> {
+async exportDictionary(filterName: string) : Promise<Result<number | null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("export_dictionary", { path }) };
+    return { status: "ok", data: await TAURI_INVOKE("export_dictionary", { filterName }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
 /**
- * Merges a dictionary file into this one. Never removes anything.
+ * Asks for a dictionary file and merges it into this one. Never removes
+ * anything. `None` if the dialog was cancelled.
  */
-async importDictionary(path: string) : Promise<Result<ImportSummary, SyncError>> {
+async importDictionary(filterName: string) : Promise<Result<ImportSummary | null, SyncError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("import_dictionary", { path }) };
+    return { status: "ok", data: await TAURI_INVOKE("import_dictionary", { filterName }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
