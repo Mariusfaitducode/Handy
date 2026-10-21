@@ -5,6 +5,7 @@ use crate::audio_toolkit::VadPolicy;
 use crate::managers::audio::{recording_error_type, AudioRecordingManager};
 use crate::managers::history::HistoryManager;
 use crate::managers::model::ModelManager;
+use crate::managers::stats::{self, StatsManager};
 use crate::managers::transcription::policy::{live_decode, LiveDecode, ModelTraits};
 use crate::managers::transcription::StreamWorkKind;
 use crate::managers::transcription::TranscriptionManager;
@@ -605,6 +606,9 @@ impl ShortcutAction for TranscribeAction {
         let rm = Arc::clone(&app.state::<Arc<AudioRecordingManager>>());
         let tm = Arc::clone(&app.state::<Arc<TranscriptionManager>>());
         let hm = Arc::clone(&app.state::<Arc<HistoryManager>>());
+        let sm = Arc::clone(&app.state::<Arc<StatsManager>>());
+        // The app in front now is the one the text will be pasted into.
+        let target_app = stats::frontmost_app_name();
 
         set_tray_state(app, TrayIconState::Transcribing);
         // Stop should give immediate visual feedback. Live streaming can keep
@@ -815,6 +819,20 @@ impl ShortcutAction for TranscribeAction {
                                 utils::hide_recording_overlay(&ah);
                                 set_tray_state(&ah, TrayIconState::Idle);
                                 return;
+                            }
+
+                            {
+                                let settings = get_settings(&ah);
+                                let duration_ms = (sample_count as u64 * 1000
+                                    / crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE as u64)
+                                    as i64;
+                                sm.record_dictation(
+                                    &processed.final_text,
+                                    Some(duration_ms),
+                                    target_app.clone(),
+                                    &settings.selected_language,
+                                    settings.translate_to_english,
+                                );
                             }
 
                             // Save to history if WAV was saved

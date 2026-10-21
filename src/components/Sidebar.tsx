@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   BookA,
+  ChartColumn,
   Cog,
   FlaskConical,
   History,
@@ -20,6 +21,7 @@ import {
   AdvancedSettings,
   HistorySettings,
   DictionarySettings,
+  StatsSettings,
   DebugSettings,
   AboutSettings,
   PostProcessingSettings,
@@ -75,6 +77,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.notes",
     icon: NotebookPen,
     component: NotesSettings,
+    enabled: () => true,
+  },
+  stats: {
+    labelKey: "sidebar.stats",
+    icon: ChartColumn,
+    component: StatsSettings,
     enabled: () => true,
   },
   models: {
